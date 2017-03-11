@@ -52,21 +52,18 @@ namespace SilverSim.Updater
             }
         }
 
-        public IReadOnlyList<string> DefaultConfigurationFiles
+        public IReadOnlyList<string> GetDefaultConfigurationFiles(string mode)
         {
-            get
+            List<string> configs = new List<string>();
+            foreach (PackageDescription pack in m_InstalledPackages.Values)
             {
-                List<string> configs = new List<string>();
-                foreach (PackageDescription pack in m_InstalledPackages.Values)
+                string defConfig = pack.DefaultConfiguration;
+                if (!string.IsNullOrEmpty(defConfig) && pack.StartTypes.Contains(mode))
                 {
-                    string defConfig = pack.DefaultConfiguration;
-                    if (!string.IsNullOrEmpty(defConfig))
-                    {
-                        configs.Add(pack.DefaultConfiguration);
-                    }
+                    configs.Add(pack.DefaultConfiguration);
                 }
-                return configs;
             }
+            return configs;
         }
 
         static public CoreUpdater Instance = new CoreUpdater();
@@ -101,13 +98,13 @@ namespace SilverSim.Updater
 
         private CoreUpdater()
         {
+            PackageCachePath = Path.GetFullPath("../data/dl-cache");
+            Directory.CreateDirectory(PackageCachePath);
+            InstalledPackagesPath = Path.GetFullPath("installed-packages");
+            Directory.CreateDirectory(InstalledPackagesPath);
+            InterfaceVersion = string.Empty;
             if (LoadUpdaterConfig())
             {
-                InterfaceVersion = string.Empty;
-                PackageCachePath = Path.GetFullPath("../data/dl-cache");
-                Directory.CreateDirectory(PackageCachePath);
-                InstalledPackagesPath = Path.GetFullPath("../data/installed-packages");
-                Directory.CreateDirectory(InstalledPackagesPath);
                 if (!string.IsNullOrEmpty(FeedUrl))
                 {
                     try
@@ -133,7 +130,7 @@ namespace SilverSim.Updater
             {
                 return;
             }
-            LoadLocalPackageDescriptions();
+            LoadInstalledPackageDescriptions();
             UpdatePackageFeed();
             List<string> updatable = new List<string>();
             foreach (KeyValuePair<string, PackageDescription> kvp in m_InstalledPackages)
@@ -151,7 +148,7 @@ namespace SilverSim.Updater
             }
         }
 
-        public void LoadLocalPackageDescriptions()
+        public void LoadInstalledPackageDescriptions()
         {
             string[] pkgfiles = Directory.GetFiles(InstalledPackagesPath, "*.spkg");
             m_InstalledPackages.Clear();

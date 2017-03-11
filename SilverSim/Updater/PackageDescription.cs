@@ -29,8 +29,10 @@ namespace SilverSim.Updater
         public string DefaultConfiguration { get; private set; }
         readonly Dictionary<string, string> m_Dependencies = new Dictionary<string, string>();
         readonly Dictionary<string, FileInfo> m_Files = new Dictionary<string, FileInfo>();
+        readonly List<string> m_StartTypes = new List<string>();
         public IReadOnlyDictionary<string, string> Dependencies { get { return m_Dependencies; } }
         public IReadOnlyDictionary<string, FileInfo> Files { get { return m_Files; } }
+        public IReadOnlyList<string> StartTypes { get { return m_StartTypes; } }
 
         public struct FileInfo
         {
@@ -42,7 +44,7 @@ namespace SilverSim.Updater
         {
             using (XmlTextReader reader = new XmlTextReader(url))
             {
-                LoadPackageDataMain(reader);
+                LoadPackageData(reader);
             }
         }
 
@@ -50,7 +52,7 @@ namespace SilverSim.Updater
         {
             using (XmlTextReader reader = new XmlTextReader(input))
             {
-                LoadPackageDataMain(reader);
+                LoadPackageData(reader);
             }
         }
 
@@ -116,7 +118,7 @@ namespace SilverSim.Updater
                                 {
                                     throw new InvalidPackageDescriptionException();
                                 }
-                                DefaultConfiguration = reader.ReadElementContentAsString();
+                                LoadPackageDataDefaultCfg(reader);
                                 break;
 
                             case "interface-version":
@@ -162,6 +164,51 @@ namespace SilverSim.Updater
 
                     case XmlNodeType.EndElement:
                         if(reader.Name == "package")
+                        {
+                            return;
+                        }
+                        throw new InvalidPackageDescriptionException();
+                }
+            }
+            throw new InvalidPackageDescriptionException();
+        }
+
+        void LoadPackageDataDefaultCfg(XmlTextReader reader)
+        {
+            while (reader.Read())
+            {
+                switch (reader.NodeType)
+                {
+                    case XmlNodeType.Element:
+                        switch (reader.Name)
+                        {
+                            case "source":
+                                if (reader.IsEmptyElement)
+                                {
+                                    throw new InvalidPackageDescriptionException();
+                                }
+                                DefaultConfiguration = reader.ReadElementContentAsString();
+                                break;
+
+                            case "use-if-started-as":
+                                if (reader.IsEmptyElement)
+                                {
+                                    throw new InvalidPackageDescriptionException();
+                                }
+                                m_StartTypes.Add(reader.ReadElementContentAsString());
+                                break;
+
+                            default:
+                                if (!reader.IsEmptyElement)
+                                {
+                                    reader.Skip();
+                                }
+                                break;
+                        }
+                        break;
+
+                    case XmlNodeType.EndElement:
+                        if (reader.Name == "default-configuration")
                         {
                             return;
                         }
@@ -246,10 +293,6 @@ namespace SilverSim.Updater
                         switch (reader.Name)
                         {
                             case "dependency":
-                                if (reader.IsEmptyElement)
-                                {
-                                    throw new InvalidPackageDescriptionException();
-                                }
                                 string version = string.Empty;
                                 string name = string.Empty;
 
@@ -273,6 +316,10 @@ namespace SilverSim.Updater
                                     }
                                     while (reader.MoveToNextAttribute());
                                     m_Dependencies.Add(name, version);
+                                }
+                                if(!reader.IsEmptyElement)
+                                {
+                                    reader.Skip();
                                 }
                                 break;
 
@@ -323,7 +370,15 @@ namespace SilverSim.Updater
                         if (!string.IsNullOrEmpty(DefaultConfiguration))
                         {
                             w.WriteStartElement("default-configuration");
+                            w.WriteStartElement("source");
                             w.WriteValue(DefaultConfiguration);
+                            w.WriteEndElement();
+                            foreach(string start in StartTypes)
+                            {
+                                w.WriteStartElement("use-if-started-as");
+                                w.WriteValue(start);
+                                w.WriteEndElement();
+                            }
                             w.WriteEndElement();
                         }
 
