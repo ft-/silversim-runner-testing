@@ -87,8 +87,7 @@ namespace SilverSim.Main.Service
 
             Thread.CurrentThread.Name = "SilverSim:Main";
 
-            /* we are using it in this pattern since the updater logic is also meant for later use in a building block */
-            new CoreUpdater().CheckForUpdates();
+            CoreUpdater.Instance.CheckForUpdates();
 
             /* by not hard referencing the assembly we can actually implement an updater concept here */
             Assembly assembly = Assembly.Load("SilverSim.Main.Common");

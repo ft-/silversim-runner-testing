@@ -52,6 +52,8 @@ namespace SilverSim.Updater
             }
         }
 
+        static public CoreUpdater Instance = new CoreUpdater();
+
         public bool LoadUpdaterConfig()
         {
             if (File.Exists("SilverSim.Updater.dll.config"))
@@ -80,7 +82,7 @@ namespace SilverSim.Updater
             return false;
         }
 
-        public CoreUpdater()
+        private CoreUpdater()
         {
             if (LoadUpdaterConfig())
             {
