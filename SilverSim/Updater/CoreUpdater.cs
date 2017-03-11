@@ -156,7 +156,15 @@ namespace SilverSim.Updater
             {
                 using (Stream i = new FileStream(pkgfile, FileMode.Open))
                 {
-                    PackageDescription desc = new PackageDescription(i);
+                    PackageDescription desc;
+                    try
+                    {
+                        desc = new PackageDescription(i);
+                    }
+                    catch(Exception e)
+                    {
+                        throw new InvalidDataException("Failed to load package description " + pkgfile, e);
+                    }
                     m_InstalledPackages.Add(desc.Name, desc);
                 }
             }
