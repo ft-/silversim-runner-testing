@@ -39,7 +39,7 @@ namespace SilverSim.Updater
         public string InterfaceVersion { get; private set; }
         Dictionary<string, PackageDescription> m_InstalledPackages = new Dictionary<string, PackageDescription>();
         Dictionary<string, PackageDescription> m_AvailablePackages = new Dictionary<string, PackageDescription>();
-        public Dictionary<string, string> InstalledPackages
+        public IReadOnlyDictionary<string, string> InstalledPackages
         {
             get
             {
@@ -49,6 +49,23 @@ namespace SilverSim.Updater
                     pkgs.Add(pack.Name, pack.Version);
                 }
                 return pkgs;
+            }
+        }
+
+        public IReadOnlyList<string> DefaultConfigurationFiles
+        {
+            get
+            {
+                List<string> configs = new List<string>();
+                foreach (PackageDescription pack in m_InstalledPackages.Values)
+                {
+                    string defConfig = pack.DefaultConfiguration;
+                    if (!string.IsNullOrEmpty(defConfig))
+                    {
+                        configs.Add(pack.DefaultConfiguration);
+                    }
+                }
+                return configs;
             }
         }
 
