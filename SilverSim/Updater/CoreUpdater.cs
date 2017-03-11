@@ -154,6 +154,7 @@ namespace SilverSim.Updater
         public void LoadLocalPackageDescriptions()
         {
             string[] pkgfiles = Directory.GetFiles(InstalledPackagesPath, "*.spkg");
+            m_InstalledPackages.Clear();
             foreach (string pkgfile in pkgfiles)
             {
                 using (Stream i = new FileStream(pkgfile, FileMode.Open))
