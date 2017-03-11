@@ -88,7 +88,9 @@ namespace SilverSim.Updater
             {
                 InterfaceVersion = string.Empty;
                 PackageCachePath = Path.GetFullPath("../data/dl-cache");
+                Directory.CreateDirectory(PackageCachePath);
                 InstalledPackagesPath = Path.GetFullPath("../data/installed-packages");
+                Directory.CreateDirectory(InstalledPackagesPath);
                 if (!string.IsNullOrEmpty(FeedUrl))
                 {
                     try
