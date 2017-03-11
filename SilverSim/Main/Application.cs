@@ -16,6 +16,7 @@ namespace SilverSim.Main
         {
             Thread.CurrentThread.Name = "SilverSim:Main";
             CoreUpdater.Instance.CheckForUpdates();
+            CoreUpdater.Instance.VerifyInstallation();
 
             /* by not hard referencing the assembly we can actually implement an updater concept here */
             Assembly assembly = Assembly.Load("SilverSim.Main.Common");

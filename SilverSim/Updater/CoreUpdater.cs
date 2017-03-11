@@ -291,16 +291,19 @@ namespace SilverSim.Updater
         {
             foreach (KeyValuePair<string, PackageDescription.FileInfo> kvp in pack.Files)
             {
-                using (SHA256 hash = SHA256.Create())
+                if (kvp.Value.Hash != null)
                 {
-                    using (FileStream fs = new FileStream(kvp.Key, FileMode.Open))
+                    using (SHA256 hash = SHA256.Create())
                     {
-                        hash.ComputeHash(fs);
-                    }
+                        using (FileStream fs = new FileStream(kvp.Key, FileMode.Open))
+                        {
+                            hash.ComputeHash(fs);
+                        }
 
-                    if (!hash.Hash.Equals(pack.Hash))
-                    {
-                        return false;
+                        if (!hash.Hash.Equals(kvp.Value.Hash))
+                        {
+                            return false;
+                        }
                     }
                 }
             }
