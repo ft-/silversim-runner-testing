@@ -21,14 +21,14 @@ namespace SilverSim.Updater
 
     public class PackageDescription
     {
-        public string Version { get; private set; }
-        public string InterfaceVersion { get; private set; }
-        public string Name { get; private set; }
-        public byte[] Hash { get; private set; }
-        public bool IsCheckedForUpdates { get; private set; }
-        readonly Dictionary<string, string> m_Dependencies = new Dictionary<string, string>();
-        readonly Dictionary<string, FileInfo> m_Files = new Dictionary<string, FileInfo>();
-        readonly List<Configuration> m_DefaultConfigurations = new List<Configuration>();
+        public string Version { get; protected set; }
+        public string InterfaceVersion { get; protected set; }
+        public string Name { get; protected set; }
+        public byte[] Hash { get; protected set; }
+        public bool IsCheckedForUpdates { get; protected set; }
+        protected readonly Dictionary<string, string> m_Dependencies = new Dictionary<string, string>();
+        protected readonly Dictionary<string, FileInfo> m_Files = new Dictionary<string, FileInfo>();
+        protected readonly List<Configuration> m_DefaultConfigurations = new List<Configuration>();
         public IReadOnlyDictionary<string, string> Dependencies { get { return m_Dependencies; } }
         public IReadOnlyDictionary<string, FileInfo> Files { get { return m_Files; } }
         public IReadOnlyList<Configuration> DefaultConfigurations { get { return m_DefaultConfigurations; } }
@@ -43,6 +43,11 @@ namespace SilverSim.Updater
         {
             public string Source;
             public IReadOnlyList<string> StartTypes;
+        }
+
+        protected PackageDescription()
+        {
+
         }
 
         public PackageDescription(string url)
@@ -374,6 +379,13 @@ namespace SilverSim.Updater
                         w.WriteStartElement("interface-version");
                         w.WriteValue(InterfaceVersion);
                         w.WriteEndElement();
+
+                        if(Hash != null)
+                        {
+                            w.WriteStartElement("sha256");
+                            w.WriteValue(Convert.ToBase64String(Hash));
+                            w.WriteEndElement();
+                        }
 
                         foreach(Configuration cfg in m_DefaultConfigurations)
                         {

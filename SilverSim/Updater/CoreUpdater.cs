@@ -7,6 +7,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Runtime.Serialization;
 using System.Security.Cryptography;
 using System.Xml;
@@ -102,10 +103,10 @@ namespace SilverSim.Updater
 
         private CoreUpdater()
         {
-            InstallRootPath = Path.GetFullPath("..");
-            PackageCachePath = Path.GetFullPath("../data/dl-cache");
+            InstallRootPath = Path.GetFullPath(Path.Combine(Assembly.GetExecutingAssembly().Location, "../.."));
+            PackageCachePath = Path.Combine(InstallRootPath, "data/dl-cache");
             Directory.CreateDirectory(PackageCachePath);
-            InstalledPackagesPath = Path.GetFullPath("installed-packages");
+            InstalledPackagesPath = Path.Combine(InstallRootPath, "bin/installed-packages");
             Directory.CreateDirectory(InstalledPackagesPath);
             InterfaceVersion = string.Empty;
             if (LoadUpdaterConfig())
@@ -170,7 +171,14 @@ namespace SilverSim.Updater
                     {
                         throw new InvalidDataException("Failed to load package description " + pkgfile, e);
                     }
-                    m_InstalledPackages.Add(desc.Name, desc);
+                    try
+                    {
+                        m_InstalledPackages.Add(desc.Name, desc);
+                    }
+                    catch
+                    {
+                        throw new ArgumentException(string.Format("Installed package {0} is duplicate in {1}.", desc.Name, pkgfile));
+                    }
                 }
             }
         }
@@ -306,7 +314,7 @@ namespace SilverSim.Updater
                 {
                     using (SHA256 hash = SHA256.Create())
                     {
-                        using (FileStream fs = new FileStream(Path.Combine(InstallRootPath, kvp.Key), FileMode.Open))
+                        using (FileStream fs = new FileStream(Path.Combine(InstallRootPath, kvp.Key), FileMode.Open, FileAccess.Read))
                         {
                             hash.ComputeHash(fs);
                         }
@@ -330,7 +338,7 @@ namespace SilverSim.Updater
             {
                 using (SHA256 hash = SHA256.Create())
                 {
-                    using (FileStream fs = new FileStream(cachefile, FileMode.Open))
+                    using (FileStream fs = new FileStream(cachefile, FileMode.Open, FileAccess.Read))
                     {
                         hash.ComputeHash(fs);
                     }
@@ -403,7 +411,7 @@ namespace SilverSim.Updater
             { 
                 using (SHA256 hash = SHA256.Create())
                 {
-                    using (FileStream fs = new FileStream(cachefile, FileMode.Open))
+                    using (FileStream fs = new FileStream(cachefile, FileMode.Open, FileAccess.Read))
                     {
                         hash.ComputeHash(fs);
                     }
