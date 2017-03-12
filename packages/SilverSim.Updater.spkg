@@ -2,6 +2,9 @@
 <package>
 	<name>SilverSim.Updater</name>
 	<requires-replacement>true</requires-replacement>
+	<dependencies>
+		<dependency name="SilverSim.Updater.Cfg"/>
+	</dependencies>
 	<files>
 		<file name="bin/SilverSim.Updater.dll"/>
 	</files>
