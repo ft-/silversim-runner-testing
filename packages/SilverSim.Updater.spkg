@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <package>
 	<name>SilverSim.Updater</name>
+	<requires-replacement>true</requires-replacement>
 	<files>
 		<file name="bin/SilverSim.Updater.dll"/>
 	</files>
