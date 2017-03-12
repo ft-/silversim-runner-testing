@@ -99,6 +99,13 @@ namespace SilverSim.Main.Service
                 return;
             }
 
+            if(CoreUpdater.Instance.IsRestartRequired)
+            {
+                Stop();
+                m_ShutdownCompleteEvent.Set();
+                return;
+            }
+
             /* by not hard referencing the assembly we can actually implement an updater concept here */
             Assembly assembly = Assembly.Load("SilverSim.Main.Common");
             Type t = assembly.GetType("SilverSim.Main.Common.Startup");

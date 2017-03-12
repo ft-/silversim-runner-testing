@@ -39,6 +39,7 @@ namespace SilverSim.Updater
         public string InstalledPackagesPath { get; private set; }
         public string InterfaceVersion { get; private set; }
         public string InstallRootPath { get; private set; }
+        public bool IsRestartRequired { get; private set; }
         Dictionary<string, PackageDescription> m_InstalledPackages = new Dictionary<string, PackageDescription>();
         Dictionary<string, PackageDescription> m_AvailablePackages = new Dictionary<string, PackageDescription>();
         public IReadOnlyDictionary<string, string> InstalledPackages
@@ -127,6 +128,10 @@ namespace SilverSim.Updater
                         InterfaceVersion = string.Empty;
                     }
                 }
+            }
+            foreach(string deletefile in Directory.GetFiles(Path.Combine(InstallRootPath, "bin"), "*.delete", SearchOption.AllDirectories))
+            {
+                File.Delete(deletefile);
             }
         }
 
@@ -374,7 +379,13 @@ namespace SilverSim.Updater
                     {
                         using (Stream i = entry.Open())
                         {
-                            using (FileStream o = new FileStream(Path.Combine(InstallRootPath, entry.FullName), FileMode.Create))
+                            string targetFile = Path.Combine(InstallRootPath, entry.FullName);
+                            if (package.RequiresReplacement)
+                            {
+                                File.Move(targetFile, targetFile + ".delete");
+                                IsRestartRequired = true;
+                            }
+                            using (FileStream o = new FileStream(targetFile, FileMode.Create))
                             {
                                 i.CopyTo(o);
                             }
