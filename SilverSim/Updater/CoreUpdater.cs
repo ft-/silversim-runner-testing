@@ -57,10 +57,13 @@ namespace SilverSim.Updater
             List<string> configs = new List<string>();
             foreach (PackageDescription pack in m_InstalledPackages.Values)
             {
-                string defConfig = pack.DefaultConfiguration;
-                if (!string.IsNullOrEmpty(defConfig) && pack.StartTypes.Contains(mode))
+                foreach (PackageDescription.Configuration cfg in pack.DefaultConfigurations)
                 {
-                    configs.Add(pack.DefaultConfiguration);
+                    string defConfig = cfg.Source;
+                    if (!string.IsNullOrEmpty(defConfig) && cfg.StartTypes.Contains(mode))
+                    {
+                        configs.Add(cfg.Source);
+                    }
                 }
             }
             return configs;

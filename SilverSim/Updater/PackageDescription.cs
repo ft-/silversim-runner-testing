@@ -26,18 +26,23 @@ namespace SilverSim.Updater
         public string Name { get; private set; }
         public byte[] Hash { get; private set; }
         public bool IsCheckedForUpdates { get; private set; }
-        public string DefaultConfiguration { get; private set; }
         readonly Dictionary<string, string> m_Dependencies = new Dictionary<string, string>();
         readonly Dictionary<string, FileInfo> m_Files = new Dictionary<string, FileInfo>();
-        readonly List<string> m_StartTypes = new List<string>();
+        readonly List<Configuration> m_DefaultConfigurations = new List<Configuration>();
         public IReadOnlyDictionary<string, string> Dependencies { get { return m_Dependencies; } }
         public IReadOnlyDictionary<string, FileInfo> Files { get { return m_Files; } }
-        public IReadOnlyList<string> StartTypes { get { return m_StartTypes; } }
+        public IReadOnlyList<Configuration> DefaultConfigurations { get { return m_DefaultConfigurations; } }
 
         public struct FileInfo
         {
             public byte[] Hash;
             public string Version;
+        }
+
+        public struct Configuration
+        {
+            public string Source;
+            public IReadOnlyList<string> StartTypes;
         }
 
         public PackageDescription(string url)
@@ -118,7 +123,7 @@ namespace SilverSim.Updater
                                 {
                                     throw new InvalidPackageDescriptionException();
                                 }
-                                LoadPackageDataDefaultCfg(reader);
+                                m_DefaultConfigurations.Add(LoadPackageDataDefaultCfg(reader));
                                 break;
 
                             case "interface-version":
@@ -173,8 +178,10 @@ namespace SilverSim.Updater
             throw new InvalidPackageDescriptionException();
         }
 
-        void LoadPackageDataDefaultCfg(XmlTextReader reader)
+        Configuration LoadPackageDataDefaultCfg(XmlTextReader reader)
         {
+            Configuration cfg = new Configuration();
+            List<string> startTypes = new List<string>();
             while (reader.Read())
             {
                 switch (reader.NodeType)
@@ -187,7 +194,7 @@ namespace SilverSim.Updater
                                 {
                                     throw new InvalidPackageDescriptionException();
                                 }
-                                DefaultConfiguration = reader.ReadElementContentAsString();
+                                cfg.Source = reader.ReadElementContentAsString();
                                 break;
 
                             case "use-if-started-as":
@@ -195,7 +202,7 @@ namespace SilverSim.Updater
                                 {
                                     throw new InvalidPackageDescriptionException();
                                 }
-                                m_StartTypes.Add(reader.ReadElementContentAsString());
+                                startTypes.Add(reader.ReadElementContentAsString());
                                 break;
 
                             default:
@@ -210,7 +217,8 @@ namespace SilverSim.Updater
                     case XmlNodeType.EndElement:
                         if (reader.Name == "default-configuration")
                         {
-                            return;
+                            cfg.StartTypes = startTypes;
+                            return cfg;
                         }
                         throw new InvalidPackageDescriptionException();
                 }
@@ -367,13 +375,13 @@ namespace SilverSim.Updater
                         w.WriteValue(InterfaceVersion);
                         w.WriteEndElement();
 
-                        if (!string.IsNullOrEmpty(DefaultConfiguration))
+                        foreach(Configuration cfg in m_DefaultConfigurations)
                         {
                             w.WriteStartElement("default-configuration");
                             w.WriteStartElement("source");
-                            w.WriteValue(DefaultConfiguration);
+                            w.WriteValue(cfg.Source);
                             w.WriteEndElement();
-                            foreach(string start in StartTypes)
+                            foreach(string start in cfg.StartTypes)
                             {
                                 w.WriteStartElement("use-if-started-as");
                                 w.WriteValue(start);
