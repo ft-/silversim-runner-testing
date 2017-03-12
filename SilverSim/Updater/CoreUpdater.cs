@@ -37,6 +37,7 @@ namespace SilverSim.Updater
         public string PackageCachePath { get; private set; }
         public string InstalledPackagesPath { get; private set; }
         public string InterfaceVersion { get; private set; }
+        public string InstallRootPath { get; private set; }
         Dictionary<string, PackageDescription> m_InstalledPackages = new Dictionary<string, PackageDescription>();
         Dictionary<string, PackageDescription> m_AvailablePackages = new Dictionary<string, PackageDescription>();
         public IReadOnlyDictionary<string, string> InstalledPackages
@@ -101,6 +102,7 @@ namespace SilverSim.Updater
 
         private CoreUpdater()
         {
+            InstallRootPath = Path.GetFullPath("..");
             PackageCachePath = Path.GetFullPath("../data/dl-cache");
             Directory.CreateDirectory(PackageCachePath);
             InstalledPackagesPath = Path.GetFullPath("installed-packages");
@@ -304,7 +306,7 @@ namespace SilverSim.Updater
                 {
                     using (SHA256 hash = SHA256.Create())
                     {
-                        using (FileStream fs = new FileStream(kvp.Key, FileMode.Open))
+                        using (FileStream fs = new FileStream(Path.Combine(InstallRootPath, kvp.Key), FileMode.Open))
                         {
                             hash.ComputeHash(fs);
                         }
@@ -364,7 +366,7 @@ namespace SilverSim.Updater
                     {
                         using (Stream i = entry.Open())
                         {
-                            using (FileStream o = new FileStream(entry.FullName, FileMode.Create))
+                            using (FileStream o = new FileStream(Path.Combine(InstallRootPath, entry.FullName), FileMode.Create))
                             {
                                 i.CopyTo(o);
                             }
