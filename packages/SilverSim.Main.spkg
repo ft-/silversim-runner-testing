@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<package>
+	<name>SilverSim.Main</name>
+	<dependencies>
+		<dependency name="SilverSim.Updater"/>
+		<dependency name="SilverSim.Core"/>
+	</dependencies>
+	<files>
+		<file name="bin/SilverSim.Main.exe"/>
+		<file name="bin/SilverSim.Main.exe.config"/>
+	</files>
+</package>
