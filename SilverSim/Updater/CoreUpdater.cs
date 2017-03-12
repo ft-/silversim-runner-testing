@@ -60,7 +60,7 @@ namespace SilverSim.Updater
                 foreach (PackageDescription.Configuration cfg in pack.DefaultConfigurations)
                 {
                     string defConfig = cfg.Source;
-                    if (!string.IsNullOrEmpty(defConfig) && cfg.StartTypes.Contains(mode))
+                    if (!string.IsNullOrEmpty(defConfig) && (cfg.StartTypes.Count == 0 || cfg.StartTypes.Contains(mode)))
                     {
                         configs.Add(cfg.Source);
                     }
