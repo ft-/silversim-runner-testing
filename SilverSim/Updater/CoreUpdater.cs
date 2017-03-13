@@ -147,7 +147,7 @@ namespace SilverSim.Updater
             foreach (KeyValuePair<string, PackageDescription> kvp in m_InstalledPackages)
             {
                 PackageDescription current;
-                if (m_AvailablePackages.TryGetValue(kvp.Key, out current) && current.Version != kvp.Value.Version && current.IsCheckedForUpdates)
+                if (m_AvailablePackages.TryGetValue(kvp.Key, out current) && current.Version != kvp.Value.Version)
                 {
                     updatable.Add(kvp.Key);
                 }
@@ -216,7 +216,7 @@ namespace SilverSim.Updater
                 foreach(KeyValuePair<string, PackageDescription> kvp in m_InstalledPackages)
                 {
                     PackageDescription current;
-                    if(m_AvailablePackages.TryGetValue(kvp.Key, out current) && current.Version != kvp.Value.Version && current.IsCheckedForUpdates)
+                    if(m_AvailablePackages.TryGetValue(kvp.Key, out current) && current.Version != kvp.Value.Version)
                     {
                         return true;
                     }

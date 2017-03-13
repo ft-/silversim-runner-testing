@@ -25,7 +25,6 @@ namespace SilverSim.Updater
         public string InterfaceVersion { get; protected set; }
         public string Name { get; protected set; }
         public byte[] Hash { get; protected set; }
-        public bool IsCheckedForUpdates { get; protected set; }
         public bool RequiresReplacement { get; protected set; }
         protected readonly Dictionary<string, string> m_Dependencies = new Dictionary<string, string>();
         protected readonly Dictionary<string, FileInfo> m_Files = new Dictionary<string, FileInfo>();
@@ -106,14 +105,6 @@ namespace SilverSim.Updater
                                     throw new InvalidPackageDescriptionException();
                                 }
                                 Version = reader.ReadElementContentAsString();
-                                break;
-
-                            case "check-for-updates":
-                                if(reader.IsEmptyElement)
-                                {
-                                    throw new InvalidPackageDescriptionException();
-                                }
-                                IsCheckedForUpdates = reader.ReadElementContentAsBoolean();
                                 break;
 
                             case "requires-replacement":
@@ -379,10 +370,6 @@ namespace SilverSim.Updater
 
                         w.WriteStartElement("version");
                         w.WriteValue(Version);
-                        w.WriteEndElement();
-
-                        w.WriteStartElement("check-for-updates");
-                        w.WriteValue(IsCheckedForUpdates);
                         w.WriteEndElement();
 
                         w.WriteStartElement("requires-replacement");
