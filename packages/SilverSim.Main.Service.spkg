@@ -3,7 +3,6 @@
 	<name>SilverSim.Main.Service</name>
 	<requires-replacement>true</requires-replacement>
 	<dependencies>
-		<dependency name="SilverSim.Updater"/>
 		<dependency name="SilverSim.Core"/>
 	</dependencies>
 	<files>
