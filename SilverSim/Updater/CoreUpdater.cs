@@ -284,7 +284,10 @@ namespace SilverSim.Updater
                     {
                         continue;
                     }
-                    newDependencies.Add(dep.Key, dep.Value);
+                    if (!newDependencies.ContainsKey(dep.Key))
+                    {
+                        newDependencies.Add(dep.Key, dep.Value);
+                    }
                 }
             }
 
@@ -324,6 +327,38 @@ namespace SilverSim.Updater
                 {
                     DownloadPackage(pack);
                     UnpackPackage(pack);
+                }
+            }
+
+            List<string> unresolvedDependencies = new List<string>();
+            foreach(PackageDescription pack in m_InstalledPackages.Values)
+            {
+                foreach(string dep in pack.Dependencies.Keys)
+                {
+                    if (!m_InstalledPackages.ContainsKey(dep))
+                    {
+                        unresolvedDependencies.Add(dep);
+                    }
+                }
+            }
+
+            while(unresolvedDependencies.Count != 0)
+            {
+                string unresolvedPackage = unresolvedDependencies[0];
+                unresolvedDependencies.RemoveAt(0);
+
+                InstallPackage(unresolvedPackage);
+
+                unresolvedDependencies.Clear();
+                foreach (PackageDescription pack in m_InstalledPackages.Values)
+                {
+                    foreach (string dep in pack.Dependencies.Values)
+                    {
+                        if (!m_InstalledPackages.ContainsKey(dep))
+                        {
+                            unresolvedDependencies.Add(dep);
+                        }
+                    }
                 }
             }
         }
@@ -400,21 +435,6 @@ namespace SilverSim.Updater
                 throw;
             }
 
-#if DISABLED
-            if(m_InstalledPackages.ContainsKey(package.Name) && !package.RequiresReplacement)
-            {
-                /* Delete files first */
-                foreach(KeyValuePair<string, PackageDescription.FileInfo> kvp in m_InstalledPackages[package.Name].Files)
-                {
-                    string fPath = Path.Combine(InstallRootPath, kvp.Key);
-                    if (File.Exists(fPath))
-                    {
-                        File.Delete(fPath);
-                    }
-                }
-            }
-#endif
-
             package.WriteFile(Path.Combine(InstalledPackagesPath, package.Name + ".spkg"));
 
             using (FileStream fs = new FileStream(cachefile, FileMode.Open))
@@ -428,7 +448,7 @@ namespace SilverSim.Updater
                             string targetFile = Path.Combine(InstallRootPath, entry.FullName);
                             if (DoesFileRequireReplacement(entry.FullName))
                             {
-                                if (!File.Exists(targetFile + ".delete"))
+                                if (!File.Exists(targetFile + ".delete") && File.Exists(targetFile))
                                 {
                                     File.Move(targetFile, targetFile + ".delete");
                                 }
