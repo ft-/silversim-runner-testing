@@ -5,6 +5,7 @@ using SilverSim.Updater;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading;
@@ -19,6 +20,11 @@ namespace SilverSim.Main
             Thread.CurrentThread.Name = "SilverSim:Main";
             CoreUpdater.Instance.CheckForUpdates();
             CoreUpdater.Instance.VerifyInstallation();
+
+            if(args.Contains("--bootstrap-only"))
+            {
+                return;
+            }
 
             if(CoreUpdater.Instance.IsRestartRequired)
             {

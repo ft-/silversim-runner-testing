@@ -432,7 +432,7 @@ namespace SilverSim.Updater
 
                     if (!IsHashEqual(hash.Hash, package.Hash))
                     {
-                        throw new InvalidPackageHashException();
+                        throw new InvalidPackageHashException("Package " + package.Name + " is invalid");
                     }
                 }
             }
