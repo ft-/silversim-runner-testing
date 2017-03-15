@@ -81,18 +81,18 @@ namespace SilverSim.Updater
                 XmlDocument doc = new XmlDocument();
                 doc.Load("SilverSim.Updater.dll.config");
                 XmlNodeList elemList = doc.GetElementsByTagName("configuration");
-                if (elemList.Count > 0)
+                if (elemList != null && elemList.Count > 0)
                 {
                     XmlElement elem = elemList[0] as XmlElement;
                     if (elem != null)
                     {
                         elemList = elem.GetElementsByTagName("feed-url");
-                        if (elemList.Count > 0)
+                        if (elemList != null && elemList.Count > 0)
                         {
                             elem = elemList[0] as XmlElement;
                             if (elem != null)
                             {
-                                FeedUrl = elem.Value;
+                                FeedUrl = elem.InnerText;
                                 if (!FeedUrl.EndsWith("/"))
                                 {
                                     FeedUrl += "/";

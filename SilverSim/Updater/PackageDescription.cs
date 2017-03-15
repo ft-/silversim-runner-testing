@@ -90,6 +90,73 @@ namespace SilverSim.Updater
             throw new InvalidPackageDescriptionException();
         }
 
+
+        public string ReadElementValueAsString(XmlTextReader reader)
+        {
+            string tagname = reader.Name;
+            if (reader.IsEmptyElement)
+            {
+                return string.Empty;
+            }
+
+            for (;;)
+            {
+                if (!reader.Read())
+                {
+                    throw new XmlException("Premature end of XML");
+                }
+
+                switch (reader.NodeType)
+                {
+                    case XmlNodeType.Element:
+                        throw new XmlException("Unexpected child node");
+
+                    case XmlNodeType.Text:
+                        return reader.ReadContentAsString();
+
+                    case XmlNodeType.EndElement:
+                        if (reader.Name != tagname)
+                        {
+                            throw new XmlException("closing tag does not match");
+                        }
+                        return string.Empty;
+
+                    default:
+                        break;
+                }
+            }
+        }
+
+        public void ReadToEndElement(XmlTextReader reader, string tagname = null)
+        {
+            if (string.IsNullOrEmpty(tagname))
+            {
+                tagname = reader.Name;
+            }
+            XmlNodeType nodeType = reader.NodeType;
+            if ((nodeType == XmlNodeType.Element || nodeType == XmlNodeType.Attribute) && !reader.IsEmptyElement)
+            {
+                do
+                {
+                    nextelem:
+                    if (!reader.Read())
+                    {
+                        throw new XmlException("Premature end of XML", null, reader.LineNumber, reader.LinePosition);
+                    }
+                    nodeType = reader.NodeType;
+                    if (nodeType == XmlNodeType.Element)
+                    {
+                        ReadToEndElement(reader);
+                        goto nextelem;
+                    }
+                } while (nodeType != XmlNodeType.EndElement);
+                if (tagname != reader.Name)
+                {
+                    throw new XmlException("Closing tag does not match", null, reader.LineNumber, reader.LinePosition);
+                }
+            }
+        }
+
         void LoadPackageDataMain(XmlTextReader reader)
         {
             while(reader.Read())
@@ -104,7 +171,7 @@ namespace SilverSim.Updater
                                 {
                                     throw new InvalidPackageDescriptionException();
                                 }
-                                Version = reader.ReadElementContentAsString();
+                                Version = ReadElementValueAsString(reader);
                                 break;
 
                             case "requires-replacement":
@@ -112,7 +179,7 @@ namespace SilverSim.Updater
                                 {
                                     throw new InvalidPackageDescriptionException();
                                 }
-                                RequiresReplacement = reader.ReadElementContentAsBoolean();
+                                RequiresReplacement = bool.Parse(ReadElementValueAsString(reader));
                                 break;
 
                             case "sha256":
@@ -120,7 +187,7 @@ namespace SilverSim.Updater
                                 {
                                     throw new InvalidPackageDescriptionException();
                                 }
-                                Hash = Convert.FromBase64String(reader.ReadElementContentAsString());
+                                Hash = Convert.FromBase64String(ReadElementValueAsString(reader));
                                 break;
 
                             case "default-configuration":
@@ -136,7 +203,7 @@ namespace SilverSim.Updater
                                 {
                                     throw new InvalidPackageDescriptionException();
                                 }
-                                InterfaceVersion = reader.ReadElementContentAsString();
+                                InterfaceVersion = ReadElementValueAsString(reader);
                                 break;
 
                             case "name":
@@ -144,7 +211,7 @@ namespace SilverSim.Updater
                                 {
                                     throw new InvalidPackageDescriptionException();
                                 }
-                                Name = reader.ReadElementContentAsString();
+                                Name = ReadElementValueAsString(reader);
                                 break;
 
                             case "dependencies":
@@ -164,10 +231,7 @@ namespace SilverSim.Updater
                                 break;
 
                             default:
-                                if(!reader.IsEmptyElement)
-                                {
-                                    reader.Skip();
-                                }
+                                ReadToEndElement(reader);
                                 break;
                         }
                         break;
@@ -199,7 +263,7 @@ namespace SilverSim.Updater
                                 {
                                     throw new InvalidPackageDescriptionException();
                                 }
-                                cfg.Source = reader.ReadElementContentAsString();
+                                cfg.Source = ReadElementValueAsString(reader);
                                 break;
 
                             case "use-if-started-as":
@@ -207,14 +271,11 @@ namespace SilverSim.Updater
                                 {
                                     throw new InvalidPackageDescriptionException();
                                 }
-                                startTypes.Add(reader.ReadElementContentAsString());
+                                startTypes.Add(ReadElementValueAsString(reader));
                                 break;
 
                             default:
-                                if (!reader.IsEmptyElement)
-                                {
-                                    reader.Skip();
-                                }
+                                ReadToEndElement(reader);
                                 break;
                         }
                         break;
@@ -243,6 +304,7 @@ namespace SilverSim.Updater
                             case "file":
                                 FileInfo fi = new FileInfo();
                                 string fname = string.Empty;
+                                bool isEmptyElement = reader.IsEmptyElement;
 
                                 if (reader.MoveToFirstAttribute())
                                 {
@@ -270,17 +332,14 @@ namespace SilverSim.Updater
 
                                     m_Files.Add(fname, fi);
                                 }
-                                if (!reader.IsEmptyElement)
+                                if (!isEmptyElement)
                                 {
-                                    reader.Skip();
+                                    ReadToEndElement(reader, "file");
                                 }
                                 break;
 
                             default:
-                                if (!reader.IsEmptyElement)
-                                {
-                                    reader.Skip();
-                                }
+                                ReadToEndElement(reader);
                                 break;
                         }
                         break;
@@ -308,6 +367,7 @@ namespace SilverSim.Updater
                             case "dependency":
                                 string version = string.Empty;
                                 string name = string.Empty;
+                                bool isEmptyElement = reader.IsEmptyElement;
 
                                 if (reader.MoveToFirstAttribute())
                                 {
@@ -330,17 +390,14 @@ namespace SilverSim.Updater
                                     while (reader.MoveToNextAttribute());
                                     m_Dependencies.Add(name, version);
                                 }
-                                if(!reader.IsEmptyElement)
+                                if(!isEmptyElement)
                                 {
-                                    reader.Skip();
+                                    ReadToEndElement(reader);
                                 }
                                 break;
 
                             default:
-                                if (!reader.IsEmptyElement)
-                                {
-                                    reader.Skip();
-                                }
+                                ReadToEndElement(reader);
                                 break;
                         }
                         break;
@@ -430,6 +487,7 @@ namespace SilverSim.Updater
                                     w.WriteAttributeString("version", kvp.Value.Version);
                                 }
                                 w.WriteAttributeString("sha256", Convert.ToBase64String(kvp.Value.Hash));
+                                w.WriteEndElement();
                             }
                             w.WriteEndElement();
                         }
