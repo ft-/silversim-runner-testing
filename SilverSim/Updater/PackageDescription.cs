@@ -26,7 +26,6 @@ namespace SilverSim.Updater
         public string InterfaceVersion { get; protected set; }
         public string Name { get; protected set; }
         public byte[] Hash { get; protected set; }
-        public bool RequiresReplacement { get; protected set; }
         protected readonly Dictionary<string, string> m_Dependencies = new Dictionary<string, string>();
         protected readonly Dictionary<string, FileInfo> m_Files = new Dictionary<string, FileInfo>();
         protected readonly List<Configuration> m_DefaultConfigurations = new List<Configuration>();
@@ -186,14 +185,6 @@ namespace SilverSim.Updater
                                     throw new InvalidPackageDescriptionException();
                                 }
                                 Version = ReadElementValueAsString(reader);
-                                break;
-
-                            case "requires-replacement":
-                                if(reader.IsEmptyElement)
-                                {
-                                    throw new InvalidPackageDescriptionException();
-                                }
-                                RequiresReplacement = bool.Parse(ReadElementValueAsString(reader));
                                 break;
 
                             case "sha256":
@@ -441,10 +432,6 @@ namespace SilverSim.Updater
 
                         w.WriteStartElement("version");
                         w.WriteValue(Version);
-                        w.WriteEndElement();
-
-                        w.WriteStartElement("requires-replacement");
-                        w.WriteValue(RequiresReplacement);
                         w.WriteEndElement();
 
                         w.WriteStartElement("interface-version");
