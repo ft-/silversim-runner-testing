@@ -116,7 +116,7 @@ namespace SilverSim.Updater
                 {
                     try
                     {
-                        using (Stream i = new FileStream(Path.Combine(InstalledPackagesPath, "SilverSim.spkg"), FileMode.Open))
+                        using (Stream i = new FileStream(Path.Combine(InstalledPackagesPath, "SilverSim.Core.spkg"), FileMode.Open))
                         {
                             PackageDescription desc = new PackageDescription(i);
                             InterfaceVersion = desc.InterfaceVersion;
