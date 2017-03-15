@@ -230,6 +230,11 @@ namespace SilverSim.Updater
         }
         #endregion
 
+        bool DoesFileRequireReplacement(string fname)
+        {
+            return fname.EndsWith(".dll") || fname.EndsWith(".exe") || fname.EndsWith(".so") || fname.EndsWith(".dylib");
+        }
+
         public void UninstallPackage(string packagename)
         {
             foreach(PackageDescription packsearch in m_InstalledPackages.Values)
@@ -244,7 +249,15 @@ namespace SilverSim.Updater
             File.Delete(Path.Combine(InstalledPackagesPath, pack.Name + ".spkg"));
             foreach(KeyValuePair<string, PackageDescription.FileInfo> kvp in pack.Files)
             {
-                File.Delete(kvp.Key);
+                string fPath = Path.Combine(InstallRootPath, kvp.Key);
+                if(DoesFileRequireReplacement(kvp.Key) && !File.Exists(fPath + ".delete"))
+                {
+                    File.Move(fPath, fPath + ".delete");
+                }
+                if (File.Exists(fPath))
+                {
+                    File.Delete(fPath);
+                }
             }
         }
 
@@ -413,13 +426,17 @@ namespace SilverSim.Updater
                         using (Stream i = entry.Open())
                         {
                             string targetFile = Path.Combine(InstallRootPath, entry.FullName);
-                            if (entry.FullName.EndsWith(".so") || entry.FullName.EndsWith(".dll") || entry.FullName.EndsWith(".exe"))
+                            if (DoesFileRequireReplacement(entry.FullName))
                             {
                                 if (!File.Exists(targetFile + ".delete"))
                                 {
                                     File.Move(targetFile, targetFile + ".delete");
                                 }
                                 IsRestartRequired = true;
+                            }
+                            if(File.Exists(targetFile))
+                            {
+                                File.Delete(targetFile);
                             }
                             using (FileStream o = new FileStream(targetFile, FileMode.Create))
                             {
