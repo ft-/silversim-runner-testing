@@ -261,6 +261,17 @@ namespace SilverSim.Updater
             }
         }
 
+        PackageDescription InstallPackageNoDependencies(string packagename, string version = "")
+        {
+            PackageDescription current;
+            current = string.IsNullOrEmpty(version) ?
+                new PackageDescription(FeedUrl + InterfaceVersion + "/" + packagename + ".spkg") :
+                new PackageDescription(FeedUrl + InterfaceVersion + "/" + version + "/" + packagename + ".spkg");
+            DownloadPackage(current);
+            UnpackPackage(current);
+            return current;
+        }
+
         public void InstallPackage(string packagename)
         {
             Dictionary<string, PackageDescription> requiredPackages = new Dictionary<string, PackageDescription>();
@@ -347,17 +358,13 @@ namespace SilverSim.Updater
                 string unresolvedPackage = unresolvedDependencies[0];
                 unresolvedDependencies.RemoveAt(0);
 
-                InstallPackage(unresolvedPackage);
+                PackageDescription pack = InstallPackageNoDependencies(unresolvedPackage);
 
-                unresolvedDependencies.Clear();
-                foreach (PackageDescription pack in m_InstalledPackages.Values)
+                foreach (string dep in pack.Dependencies.Keys)
                 {
-                    foreach (string dep in pack.Dependencies.Values)
+                    if (!m_InstalledPackages.ContainsKey(dep) && !unresolvedDependencies.Contains(dep))
                     {
-                        if (!m_InstalledPackages.ContainsKey(dep))
-                        {
-                            unresolvedDependencies.Add(dep);
-                        }
+                        unresolvedDependencies.Add(dep);
                     }
                 }
             }
@@ -452,12 +459,16 @@ namespace SilverSim.Updater
                                 {
                                     File.Move(targetFile, targetFile + ".delete");
                                 }
-                                IsRestartRequired = true;
+                                if (File.Exists(targetFile + ".delete"))
+                                {
+                                    IsRestartRequired = true;
+                                }
                             }
                             if(File.Exists(targetFile))
                             {
                                 File.Delete(targetFile);
                             }
+                            Directory.CreateDirectory(Path.Combine(targetFile, ".."));
                             using (FileStream o = new FileStream(targetFile, FileMode.Create))
                             {
                                 i.CopyTo(o);
