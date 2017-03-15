@@ -420,6 +420,10 @@ namespace SilverSim.Updater
 
         public void WriteFile(string filename)
         {
+            if(File.Exists(filename))
+            {
+                File.Delete(filename);
+            }
             using (Stream s = new FileStream(filename, FileMode.Create))
             {
                 using (XmlTextWriter w = new XmlTextWriter(s, m_UTF8NoBOM))
