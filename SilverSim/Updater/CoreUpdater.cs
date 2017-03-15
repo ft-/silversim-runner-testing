@@ -315,6 +315,22 @@ namespace SilverSim.Updater
             }
         }
 
+        bool IsHashEqual(byte[] a, byte[] b)
+        {
+            if(a.Length == b.Length)
+            {
+                for(int i = 0; i <a.Length; ++i)
+                {
+                    if(a[i] != b[i])
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
         bool VerifyInstalledPackage(PackageDescription pack)
         {
             foreach (KeyValuePair<string, PackageDescription.FileInfo> kvp in pack.Files)
@@ -323,12 +339,19 @@ namespace SilverSim.Updater
                 {
                     using (SHA256 hash = SHA256.Create())
                     {
-                        using (FileStream fs = new FileStream(Path.Combine(InstallRootPath, kvp.Key), FileMode.Open, FileAccess.Read))
+                        try
                         {
-                            hash.ComputeHash(fs);
+                            using (FileStream fs = new FileStream(Path.Combine(InstallRootPath, kvp.Key), FileMode.Open, FileAccess.Read))
+                            {
+                                hash.ComputeHash(fs);
+                            }
+                        }
+                        catch(FileNotFoundException)
+                        {
+                            return false;
                         }
 
-                        if (!hash.Hash.Equals(kvp.Value.Hash))
+                        if (!IsHashEqual(hash.Hash, kvp.Value.Hash))
                         {
                             return false;
                         }
@@ -352,7 +375,7 @@ namespace SilverSim.Updater
                         hash.ComputeHash(fs);
                     }
 
-                    if (!hash.Hash.Equals(package.Hash))
+                    if (!IsHashEqual(hash.Hash, package.Hash))
                     {
                         throw new InvalidPackageHashException();
                     }
@@ -364,14 +387,20 @@ namespace SilverSim.Updater
                 throw;
             }
 
-            if(m_InstalledPackages.ContainsKey(package.Name))
+#if DISABLED
+            if(m_InstalledPackages.ContainsKey(package.Name) && !package.RequiresReplacement)
             {
                 /* Delete files first */
                 foreach(KeyValuePair<string, PackageDescription.FileInfo> kvp in m_InstalledPackages[package.Name].Files)
                 {
-                    File.Delete(kvp.Key);
+                    string fPath = Path.Combine(InstallRootPath, kvp.Key);
+                    if (File.Exists(fPath))
+                    {
+                        File.Delete(fPath);
+                    }
                 }
             }
+#endif
 
             package.WriteFile(Path.Combine(InstalledPackagesPath, package.Name + ".spkg"));
 
@@ -384,9 +413,12 @@ namespace SilverSim.Updater
                         using (Stream i = entry.Open())
                         {
                             string targetFile = Path.Combine(InstallRootPath, entry.FullName);
-                            if (package.RequiresReplacement)
+                            if (entry.FullName.EndsWith(".so") || entry.FullName.EndsWith(".dll") || entry.FullName.EndsWith(".exe"))
                             {
-                                File.Move(targetFile, targetFile + ".delete");
+                                if (!File.Exists(targetFile + ".delete"))
+                                {
+                                    File.Move(targetFile, targetFile + ".delete");
+                                }
                                 IsRestartRequired = true;
                             }
                             using (FileStream o = new FileStream(targetFile, FileMode.Create))
@@ -407,8 +439,12 @@ namespace SilverSim.Updater
                 WebRequest webreq = WebRequest.Create(FeedUrl + package.InterfaceVersion + "/" + package.Version + "/" + package.Name + ".zip");
                 try
                 {
-                    using (Stream s = webreq.GetRequestStream())
+                    using (Stream s = webreq.GetResponse().GetResponseStream())
                     {
+                        if(File.Exists(cachefile))
+                        {
+                            File.Delete(cachefile);
+                        }
                         using (FileStream fs = new FileStream(cachefile, FileMode.Create))
                         {
                             s.CopyTo(fs);
@@ -420,27 +456,6 @@ namespace SilverSim.Updater
                     File.Delete(cachefile);
                     throw;
                 }
-            }
-
-            try
-            { 
-                using (SHA256 hash = SHA256.Create())
-                {
-                    using (FileStream fs = new FileStream(cachefile, FileMode.Open, FileAccess.Read))
-                    {
-                        hash.ComputeHash(fs);
-                    }
-
-                    if(!Array.Equals(hash.Hash, package.Hash))
-                    {
-                        throw new InvalidPackageHashException();
-                    }
-                }
-            }
-            catch
-            {
-                File.Delete(cachefile);
-                throw;
             }
         }
     }

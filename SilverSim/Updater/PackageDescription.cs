@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
@@ -64,6 +65,19 @@ namespace SilverSim.Updater
             {
                 LoadPackageData(reader);
             }
+        }
+
+        public byte[] FromHexStringToByteArray(string hex)
+        {
+            return Enumerable.Range(0, hex.Length)
+                             .Where(x => x % 2 == 0)
+                             .Select(x => Convert.ToByte(hex.Substring(x, 2), 16))
+                             .ToArray();
+        }
+
+        public string ToHexString(byte[] data)
+        {
+            return BitConverter.ToString(data).Replace("-", string.Empty);
         }
 
         void LoadPackageData(XmlTextReader reader)
@@ -187,7 +201,7 @@ namespace SilverSim.Updater
                                 {
                                     throw new InvalidPackageDescriptionException();
                                 }
-                                Hash = Convert.FromBase64String(ReadElementValueAsString(reader));
+                                Hash = FromHexStringToByteArray(ReadElementValueAsString(reader));
                                 break;
 
                             case "default-configuration":
@@ -321,7 +335,7 @@ namespace SilverSim.Updater
                                                 break;
 
                                             case "sha256":
-                                                fi.Hash = Convert.FromBase64String(reader.Value);
+                                                fi.Hash = FromHexStringToByteArray(reader.Value);
                                                 break;
 
                                             default:
@@ -440,7 +454,7 @@ namespace SilverSim.Updater
                         if(Hash != null)
                         {
                             w.WriteStartElement("sha256");
-                            w.WriteValue(Convert.ToBase64String(Hash));
+                            w.WriteValue(ToHexString(Hash));
                             w.WriteEndElement();
                         }
 
@@ -486,7 +500,7 @@ namespace SilverSim.Updater
                                 {
                                     w.WriteAttributeString("version", kvp.Value.Version);
                                 }
-                                w.WriteAttributeString("sha256", Convert.ToBase64String(kvp.Value.Hash));
+                                w.WriteAttributeString("sha256", ToHexString(kvp.Value.Hash));
                                 w.WriteEndElement();
                             }
                             w.WriteEndElement();
