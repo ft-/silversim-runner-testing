@@ -3,7 +3,7 @@
 	<name>SilverSim.Main.Service</name>
 	<requires-replacement>true</requires-replacement>
 	<dependencies>
-		<dependency name="SilverSim.Core"/>
+		<dependency name="SilverSim.Meta.Core"/>
 	</dependencies>
 	<files>
 		<file name="bin/SilverSim.Main.Service.exe"/>
