@@ -341,30 +341,30 @@ namespace SilverSim.Updater
                 }
             }
 
-            List<string> unresolvedDependencies = new List<string>();
+            Dictionary<string, string> unresolvedDependencies = new Dictionary<string, string>();
             foreach(PackageDescription pack in m_InstalledPackages.Values)
             {
-                foreach(string dep in pack.Dependencies.Keys)
+                foreach(KeyValuePair<string, string> kvp in pack.Dependencies)
                 {
-                    if (!m_InstalledPackages.ContainsKey(dep))
+                    if (!m_InstalledPackages.ContainsKey(kvp.Key))
                     {
-                        unresolvedDependencies.Add(dep);
+                        unresolvedDependencies.Add(kvp.Key, kvp.Value);
                     }
                 }
             }
 
             while(unresolvedDependencies.Count != 0)
             {
-                string unresolvedPackage = unresolvedDependencies[0];
-                unresolvedDependencies.RemoveAt(0);
+                KeyValuePair<string, string> unresolvedPackage = unresolvedDependencies.First<KeyValuePair<string, string>>();
+                unresolvedDependencies.Remove(unresolvedPackage.Key);
 
-                PackageDescription pack = InstallPackageNoDependencies(unresolvedPackage);
+                PackageDescription pack = InstallPackageNoDependencies(unresolvedPackage.Key, unresolvedPackage.Value);
 
-                foreach (string dep in pack.Dependencies.Keys)
+                foreach (KeyValuePair<string, string> kvp in pack.Dependencies)
                 {
-                    if (!m_InstalledPackages.ContainsKey(dep) && !unresolvedDependencies.Contains(dep))
+                    if (!m_InstalledPackages.ContainsKey(kvp.Key) && !unresolvedDependencies.ContainsKey(kvp.Key))
                     {
-                        unresolvedDependencies.Add(dep);
+                        unresolvedDependencies.Add(kvp.Key, kvp.Value);
                     }
                 }
             }
@@ -402,6 +402,10 @@ namespace SilverSim.Updater
                             }
                         }
                         catch(FileNotFoundException)
+                        {
+                            return false;
+                        }
+                        catch(DirectoryNotFoundException)
                         {
                             return false;
                         }
