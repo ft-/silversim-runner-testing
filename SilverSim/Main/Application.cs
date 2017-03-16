@@ -18,15 +18,18 @@ namespace SilverSim.Main
         static void Main(string[] args)
         {
             Thread.CurrentThread.Name = "SilverSim:Main";
-            CoreUpdater.Instance.CheckForUpdates();
-            CoreUpdater.Instance.VerifyInstallation();
-
-            if(args.Contains("--bootstrap-only"))
+            if (!args.Contains("--no-autoupdate"))
             {
-                return;
+                CoreUpdater.Instance.CheckForUpdates();
+                CoreUpdater.Instance.VerifyInstallation();
+
+                if (args.Contains("--update-only"))
+                {
+                    return;
+                }
             }
 
-            if(CoreUpdater.Instance.IsRestartRequired)
+            if (CoreUpdater.Instance.IsRestartRequired)
             {
                 ProcessStartInfo startInfo = new ProcessStartInfo(Assembly.GetExecutingAssembly().Location);
                 StringBuilder outarg = new StringBuilder();

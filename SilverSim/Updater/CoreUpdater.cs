@@ -120,7 +120,7 @@ namespace SilverSim.Updater
                 {
                     try
                     {
-                        using (Stream i = new FileStream(Path.Combine(InstalledPackagesPath, "SilverSim.Core.spkg"), FileMode.Open))
+                        using (Stream i = new FileStream(Path.Combine(InstalledPackagesPath, "SilverSim.Updater.Cfg.spkg"), FileMode.Open))
                         {
                             PackageDescription desc = new PackageDescription(i);
                             InterfaceVersion = desc.InterfaceVersion;
@@ -461,7 +461,14 @@ namespace SilverSim.Updater
                             {
                                 if (!File.Exists(targetFile + ".delete") && File.Exists(targetFile))
                                 {
-                                    File.Move(targetFile, targetFile + ".delete");
+                                    try
+                                    {
+                                        File.Delete(targetFile);
+                                    }
+                                    catch
+                                    {
+                                        File.Move(targetFile, targetFile + ".delete");
+                                    }
                                 }
                                 if (File.Exists(targetFile + ".delete"))
                                 {
