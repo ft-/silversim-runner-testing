@@ -263,7 +263,7 @@ namespace SilverSim.Updater
                 return;
             }
 
-            PrintLog(LogType.Error, "Updating package feed");
+            PrintLog(LogType.Info, "Updating package feed");
             List<string> additionalpackagestofetch = new List<string>();
             using (XmlTextReader reader = new XmlTextReader(FeedUrl + InterfaceVersion + "/packages.list"))
             {
@@ -323,6 +323,7 @@ namespace SilverSim.Updater
                 PackageDescription current = new PackageDescription(FeedUrl + InterfaceVersion + "/" + package + ".spkg");
                 m_AvailablePackages[current.Name] = current;
             }
+            PrintLog(LogType.Info, "Updated package feed");
         }
 
         public bool AreUpdatesAvailable
