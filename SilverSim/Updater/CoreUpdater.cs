@@ -458,6 +458,7 @@ namespace SilverSim.Updater
         {
             foreach (PackageDescription pack in new List<PackageDescription>(m_InstalledPackages.Values))
             {
+                PrintLog(LogType.Info, "Verifying package " + pack.Name + " (" + pack.Version + ")");
                 if (!VerifyInstalledPackage(pack))
                 {
                     PrintLog(LogType.Info, "Re-Installing package " + pack.Name + " (" + pack.Version + ")");
