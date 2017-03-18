@@ -456,7 +456,7 @@ namespace SilverSim.Updater
 
         public void VerifyInstallation()
         {
-            foreach (PackageDescription pack in m_InstalledPackages.Values)
+            foreach (PackageDescription pack in new List<PackageDescription>(m_InstalledPackages.Values))
             {
                 if (!VerifyInstalledPackage(pack))
                 {
