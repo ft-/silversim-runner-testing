@@ -477,7 +477,14 @@ namespace SilverSim.Updater
                         w.WriteValue(InterfaceVersion);
                         w.WriteEndElement();
 
-                        if(Hash != null)
+                        if (!string.IsNullOrEmpty(License))
+                        {
+                            w.WriteStartElement("license");
+                            w.WriteValue(License);
+                            w.WriteEndElement();
+                        }
+
+                        if (Hash != null)
                         {
                             w.WriteStartElement("sha256");
                             w.WriteValue(ToHexString(Hash));
