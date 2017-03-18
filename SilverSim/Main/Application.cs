@@ -42,7 +42,7 @@ namespace SilverSim.Main
         {
             Thread.CurrentThread.Name = "SilverSim:Main";
             CoreUpdater.Instance.OnUpdateLog += ConsoleUpdaterLog;
-            if (args.Contains("--no-auto-update"))
+            if (!args.Contains("--no-auto-update"))
             {
                 CoreUpdater.Instance.CheckForUpdates();
             }

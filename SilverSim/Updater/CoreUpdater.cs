@@ -296,13 +296,13 @@ namespace SilverSim.Updater
         }
 
         #region Package feed handling
-        public void UpdatePackageFeed()
+        public bool UpdatePackageFeed()
         {
             if(string.IsNullOrEmpty(InterfaceVersion))
             {
                 /* debugging does not have any package data normally, so we skip loading the feed */
                 PrintLog(LogType.Error, "Update system is disabled");
-                return;
+                return false;
             }
 
             PrintLog(LogType.Info, "Updating package feed");
@@ -382,6 +382,7 @@ namespace SilverSim.Updater
                 }
             }
             PrintLog(LogType.Info, "Updated package feed");
+            return true;
         }
 
         public bool AreUpdatesAvailable
