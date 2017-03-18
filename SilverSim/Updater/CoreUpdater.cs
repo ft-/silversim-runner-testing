@@ -385,10 +385,10 @@ namespace SilverSim.Updater
             current = string.IsNullOrEmpty(version) ?
                 new PackageDescription(FeedUrl + InterfaceVersion + "/" + packagename + ".spkg") :
                 new PackageDescription(FeedUrl + InterfaceVersion + "/" + version + "/" + packagename + ".spkg");
-            PrintLog(LogType.Info, "Installing package " + packagename);
+            PrintLog(LogType.Info, "Installing package " + packagename + " (" + current.Version + ")");
             DownloadPackage(current);
             UnpackPackage(current);
-            PrintLog(LogType.Info, "Installed package " + packagename);
+            PrintLog(LogType.Info, "Installed package " + packagename + " (" + current.Version + ")");
             return current;
         }
 
@@ -424,10 +424,10 @@ namespace SilverSim.Updater
 
             foreach(PackageDescription package in requiredPackages.Values)
             {
-                PrintLog(LogType.Info, "Installing package " + packagename);
+                PrintLog(LogType.Info, "Installing package " + package.Name + " (" + package.Version + ")");
                 DownloadPackage(package);
                 UnpackPackage(package);
-                PrintLog(LogType.Info, "Installed package " + packagename);
+                PrintLog(LogType.Info, "Installed package " + package.Name + " (" + package.Version + ")");
             }
         }
 
@@ -458,10 +458,10 @@ namespace SilverSim.Updater
             {
                 if (!VerifyInstalledPackage(pack))
                 {
-                    PrintLog(LogType.Info, "Re-Installing package " + pack.Name);
+                    PrintLog(LogType.Info, "Re-Installing package " + pack.Name + " (" + pack.Version + ")");
                     DownloadPackage(pack);
                     UnpackPackage(pack);
-                    PrintLog(LogType.Info, "Re-Installed package " + pack.Name);
+                    PrintLog(LogType.Info, "Re-Installed package " + pack.Name + " (" + pack.Version + ")");
                 }
             }
 
