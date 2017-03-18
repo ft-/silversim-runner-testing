@@ -32,10 +32,16 @@ namespace SilverSim.Main
 {
     static class Application
     {
+        static void ConsoleUpdaterLog(CoreUpdater.LogType type, string message)
+        {
+            Console.WriteLine("Updater - [{0}] - {1}", type.ToString(), message);
+        }
+
         [SuppressMessage("Gendarme.Rules.Exceptions", "DoNotSwallowErrorsCatchingNonSpecificExceptionsRule")]
         static void Main(string[] args)
         {
             Thread.CurrentThread.Name = "SilverSim:Main";
+            CoreUpdater.Instance.OnUpdateLog += ConsoleUpdaterLog;
             if (!args.Contains("--no-autoupdate"))
             {
                 CoreUpdater.Instance.CheckForUpdates();
@@ -58,6 +64,8 @@ namespace SilverSim.Main
                 Process.Start(Assembly.GetExecutingAssembly().Location, outarg.ToString());
                 return;
             }
+
+            CoreUpdater.Instance.OnUpdateLog -= ConsoleUpdaterLog;
 
             /* by not hard referencing the assembly we can actually implement an updater concept here */
             Assembly assembly = Assembly.Load("SilverSim.Main.Common");

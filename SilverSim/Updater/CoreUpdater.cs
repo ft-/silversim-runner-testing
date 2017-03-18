@@ -61,6 +61,28 @@ namespace SilverSim.Updater
         Dictionary<string, PackageDescription> m_InstalledPackages = new Dictionary<string, PackageDescription>();
         Dictionary<string, PackageDescription> m_AvailablePackages = new Dictionary<string, PackageDescription>();
         Dictionary<string, bool> m_HiddenPackages = new Dictionary<string, bool>();
+
+        public enum LogType
+        {
+            Info,
+            Warn,
+            Error
+        }
+        public event Action<LogType, string> OnUpdateLog;
+
+        void PrintLog(LogType evtype, string message)
+        {
+            /* events are not exactly thread-safe, so make copy first */
+            var ev = OnUpdateLog;
+            if(ev != null)
+            {
+                foreach(Action<LogType, string> del in ev.GetInvocationList())
+                {
+                    del(evtype, message);
+                }
+            }
+        }
+
         public IReadOnlyDictionary<string, string> InstalledPackages
         {
             get
@@ -169,7 +191,9 @@ namespace SilverSim.Updater
                     }
                 }
             }
-            foreach(string deletefile in Directory.GetFiles(Path.Combine(InstallRootPath, "bin"), "*.delete", SearchOption.AllDirectories))
+
+            PrintLog(LogType.Info, "Cleanup up old installation files");
+            foreach (string deletefile in Directory.GetFiles(Path.Combine(InstallRootPath, "bin"), "*.delete", SearchOption.AllDirectories))
             {
                 File.Delete(deletefile);
             }
@@ -179,6 +203,7 @@ namespace SilverSim.Updater
         {
             if(string.IsNullOrEmpty(InterfaceVersion))
             {
+                PrintLog(LogType.Error, "Update system is disabled");
                 return;
             }
             LoadInstalledPackageDescriptions();
@@ -234,9 +259,11 @@ namespace SilverSim.Updater
             if(string.IsNullOrEmpty(InterfaceVersion))
             {
                 /* debugging does not have any package data normally, so we skip loading the feed */
+                PrintLog(LogType.Error, "Update system is disabled");
                 return;
             }
 
+            PrintLog(LogType.Error, "Updating package feed");
             List<string> additionalpackagestofetch = new List<string>();
             using (XmlTextReader reader = new XmlTextReader(FeedUrl + InterfaceVersion + "/packages.list"))
             {
@@ -334,6 +361,7 @@ namespace SilverSim.Updater
                 }
             }
 
+            PrintLog(LogType.Info, "Uninstalling package " + packagename);
             PackageDescription pack = m_InstalledPackages[packagename];
             File.Delete(Path.Combine(InstalledPackagesPath, pack.Name + ".spkg"));
             foreach(KeyValuePair<string, PackageDescription.FileInfo> kvp in pack.Files)
@@ -348,6 +376,7 @@ namespace SilverSim.Updater
                     File.Delete(fPath);
                 }
             }
+            PrintLog(LogType.Info, "Uninstalled package " + packagename);
         }
 
         PackageDescription InstallPackageNoDependencies(string packagename, string version = "")
@@ -356,8 +385,10 @@ namespace SilverSim.Updater
             current = string.IsNullOrEmpty(version) ?
                 new PackageDescription(FeedUrl + InterfaceVersion + "/" + packagename + ".spkg") :
                 new PackageDescription(FeedUrl + InterfaceVersion + "/" + version + "/" + packagename + ".spkg");
+            PrintLog(LogType.Info, "Installing package " + packagename);
             DownloadPackage(current);
             UnpackPackage(current);
+            PrintLog(LogType.Info, "Installed package " + packagename);
             return current;
         }
 
@@ -393,8 +424,10 @@ namespace SilverSim.Updater
 
             foreach(PackageDescription package in requiredPackages.Values)
             {
+                PrintLog(LogType.Info, "Installing package " + packagename);
                 DownloadPackage(package);
                 UnpackPackage(package);
+                PrintLog(LogType.Info, "Installed package " + packagename);
             }
         }
 
@@ -425,8 +458,10 @@ namespace SilverSim.Updater
             {
                 if (!VerifyInstalledPackage(pack))
                 {
+                    PrintLog(LogType.Info, "Re-Installing package " + pack.Name);
                     DownloadPackage(pack);
                     UnpackPackage(pack);
+                    PrintLog(LogType.Info, "Re-Installed package " + pack.Name);
                 }
             }
 
@@ -568,7 +603,11 @@ namespace SilverSim.Updater
                             {
                                 File.Delete(targetFile);
                             }
-                            Directory.CreateDirectory(Path.Combine(targetFile, ".."));
+                            string targetDir = Path.Combine(targetFile, "..");
+                            if (!Directory.Exists(targetDir))
+                            {
+                                Directory.CreateDirectory(targetDir);
+                            }
                             using (FileStream o = new FileStream(targetFile, FileMode.Create))
                             {
                                 i.CopyTo(o);
