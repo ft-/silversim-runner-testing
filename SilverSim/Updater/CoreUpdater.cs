@@ -611,7 +611,7 @@ namespace SilverSim.Updater
                             {
                                 File.Delete(targetFile);
                             }
-                            string targetDir = Path.Combine(targetFile, "..");
+                            string targetDir = Path.GetFullPath(Path.Combine(targetFile, ".."));
                             if (!Directory.Exists(targetDir))
                             {
                                 Directory.CreateDirectory(targetDir);
