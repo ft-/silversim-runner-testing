@@ -28,6 +28,7 @@ using System.Net;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Security.Cryptography;
+using System.Threading;
 using System.Xml;
 
 namespace SilverSim.Updater
@@ -61,6 +62,7 @@ namespace SilverSim.Updater
         Dictionary<string, PackageDescription> m_InstalledPackages = new Dictionary<string, PackageDescription>();
         Dictionary<string, PackageDescription> m_AvailablePackages = new Dictionary<string, PackageDescription>();
         Dictionary<string, bool> m_HiddenPackages = new Dictionary<string, bool>();
+        readonly ReaderWriterLock m_RwLock = new ReaderWriterLock();
 
         public enum LogType
         {
@@ -88,9 +90,17 @@ namespace SilverSim.Updater
             get
             {
                 Dictionary<string, string> pkgs = new Dictionary<string, string>();
-                foreach(PackageDescription pack in m_InstalledPackages.Values)
+                m_RwLock.AcquireReaderLock(-1);
+                try
                 {
-                    pkgs.Add(pack.Name, pack.Version);
+                    foreach (PackageDescription pack in m_InstalledPackages.Values)
+                    {
+                        pkgs.Add(pack.Name, pack.Version);
+                    }
+                }
+                finally
+                {
+                    m_RwLock.ReleaseReaderLock();
                 }
                 return pkgs;
             }
@@ -101,13 +111,21 @@ namespace SilverSim.Updater
             get
             {
                 Dictionary<string, PackageDescription> pkgs = new Dictionary<string, PackageDescription>();
-                foreach(PackageDescription pack in m_AvailablePackages.Values)
+                m_RwLock.AcquireReaderLock(-1);
+                try
                 {
-                    bool ishidden;
-                    if(!m_HiddenPackages.TryGetValue(pack.Name, out ishidden) || !ishidden)
+                    foreach (PackageDescription pack in m_AvailablePackages.Values)
                     {
-                        pkgs.Add(pack.Name, new PackageDescription(pack));
+                        bool ishidden;
+                        if (!m_HiddenPackages.TryGetValue(pack.Name, out ishidden) || !ishidden)
+                        {
+                            pkgs.Add(pack.Name, new PackageDescription(pack));
+                        }
                     }
+                }
+                finally
+                {
+                    m_RwLock.ReleaseReaderLock();
                 }
                 return pkgs;
             }
@@ -116,16 +134,24 @@ namespace SilverSim.Updater
         public IReadOnlyList<string> GetDefaultConfigurationFiles(string mode)
         {
             List<string> configs = new List<string>();
-            foreach (PackageDescription pack in m_InstalledPackages.Values)
+            m_RwLock.AcquireReaderLock(-1);
+            try
             {
-                foreach (PackageDescription.Configuration cfg in pack.DefaultConfigurations)
+                foreach (PackageDescription pack in m_InstalledPackages.Values)
                 {
-                    string defConfig = cfg.Source;
-                    if (!string.IsNullOrEmpty(defConfig) && (cfg.StartTypes.Count == 0 || cfg.StartTypes.Contains(mode)))
+                    foreach (PackageDescription.Configuration cfg in pack.DefaultConfigurations)
                     {
-                        configs.Add(cfg.Source);
+                        string defConfig = cfg.Source;
+                        if (!string.IsNullOrEmpty(defConfig) && (cfg.StartTypes.Count == 0 || cfg.StartTypes.Contains(mode)))
+                        {
+                            configs.Add(cfg.Source);
+                        }
                     }
                 }
+            }
+            finally
+            {
+                m_RwLock.ReleaseReaderLock();
             }
             return configs;
         }
@@ -209,13 +235,21 @@ namespace SilverSim.Updater
             LoadInstalledPackageDescriptions();
             UpdatePackageFeed();
             List<string> updatable = new List<string>();
-            foreach (KeyValuePair<string, PackageDescription> kvp in m_InstalledPackages)
+            m_RwLock.AcquireReaderLock(-1);
+            try
             {
-                PackageDescription current;
-                if (m_AvailablePackages.TryGetValue(kvp.Key, out current) && current.Version != kvp.Value.Version)
+                foreach (KeyValuePair<string, PackageDescription> kvp in m_InstalledPackages)
                 {
-                    updatable.Add(kvp.Key);
+                    PackageDescription current;
+                    if (m_AvailablePackages.TryGetValue(kvp.Key, out current) && current.Version != kvp.Value.Version)
+                    {
+                        updatable.Add(kvp.Key);
+                    }
                 }
+            }
+            finally
+            {
+                m_RwLock.ReleaseReaderLock();
             }
 
             foreach(string pkg in updatable)
@@ -227,29 +261,37 @@ namespace SilverSim.Updater
         public void LoadInstalledPackageDescriptions()
         {
             string[] pkgfiles = Directory.GetFiles(InstalledPackagesPath, "*.spkg");
-            m_InstalledPackages.Clear();
-            foreach (string pkgfile in pkgfiles)
+            m_RwLock.AcquireWriterLock(-1);
+            try
             {
-                using (Stream i = new FileStream(pkgfile, FileMode.Open))
+                m_InstalledPackages.Clear();
+                foreach (string pkgfile in pkgfiles)
                 {
-                    PackageDescription desc;
-                    try
+                    using (Stream i = new FileStream(pkgfile, FileMode.Open))
                     {
-                        desc = new PackageDescription(i);
-                    }
-                    catch(Exception e)
-                    {
-                        throw new InvalidDataException("Failed to load package description " + pkgfile, e);
-                    }
-                    try
-                    {
-                        m_InstalledPackages.Add(desc.Name, desc);
-                    }
-                    catch
-                    {
-                        throw new ArgumentException(string.Format("Installed package {0} is duplicate in {1}.", desc.Name, pkgfile));
+                        PackageDescription desc;
+                        try
+                        {
+                            desc = new PackageDescription(i);
+                        }
+                        catch (Exception e)
+                        {
+                            throw new InvalidDataException("Failed to load package description " + pkgfile, e);
+                        }
+                        try
+                        {
+                            m_InstalledPackages.Add(desc.Name, desc);
+                        }
+                        catch
+                        {
+                            throw new ArgumentException(string.Format("Installed package {0} is duplicate in {1}.", desc.Name, pkgfile));
+                        }
                     }
                 }
+            }
+            finally
+            {
+                m_RwLock.ReleaseWriterLock();
             }
         }
 
@@ -315,13 +357,29 @@ namespace SilverSim.Updater
             foreach(KeyValuePair<string, PackageDescription> kvp in m_InstalledPackages)
             {
                 PackageDescription current = new PackageDescription(FeedUrl + InterfaceVersion + "/" + kvp.Key + ".spkg");
-                m_AvailablePackages[current.Name] = current;
+                m_RwLock.AcquireWriterLock(-1);
+                try
+                {
+                    m_AvailablePackages[current.Name] = current;
+                }
+                finally
+                {
+                    m_RwLock.ReleaseWriterLock();
+                }
             }
 
             foreach(string package in additionalpackagestofetch)
             {
                 PackageDescription current = new PackageDescription(FeedUrl + InterfaceVersion + "/" + package + ".spkg");
-                m_AvailablePackages[current.Name] = current;
+                m_RwLock.AcquireWriterLock(-1);
+                try
+                {
+                    m_AvailablePackages[current.Name] = current;
+                }
+                finally
+                {
+                    m_RwLock.ReleaseWriterLock();
+                }
             }
             PrintLog(LogType.Info, "Updated package feed");
         }
@@ -334,13 +392,21 @@ namespace SilverSim.Updater
                 {
                     UpdatePackageFeed();
                 }
-                foreach(KeyValuePair<string, PackageDescription> kvp in m_InstalledPackages)
+                m_RwLock.AcquireReaderLock(-1);
+                try
                 {
-                    PackageDescription current;
-                    if(m_AvailablePackages.TryGetValue(kvp.Key, out current) && current.Version != kvp.Value.Version)
+                    foreach (KeyValuePair<string, PackageDescription> kvp in m_InstalledPackages)
                     {
-                        return true;
+                        PackageDescription current;
+                        if (m_AvailablePackages.TryGetValue(kvp.Key, out current) && current.Version != kvp.Value.Version)
+                        {
+                            return true;
+                        }
                     }
+                }
+                finally
+                {
+                    m_RwLock.ReleaseReaderLock();
                 }
                 return false;
             }
@@ -354,12 +420,20 @@ namespace SilverSim.Updater
 
         public void UninstallPackage(string packagename)
         {
-            foreach(PackageDescription packsearch in m_InstalledPackages.Values)
+            m_RwLock.AcquireReaderLock(-1);
+            try
             {
-                if(packsearch.Dependencies.Keys.Contains(packagename))
+                foreach (PackageDescription packsearch in m_InstalledPackages.Values)
                 {
-                    throw new PackageDependencyFoundException(packsearch.Name);
+                    if (packsearch.Dependencies.Keys.Contains(packagename))
+                    {
+                        throw new PackageDependencyFoundException(packsearch.Name);
+                    }
                 }
+            }
+            finally
+            {
+                m_RwLock.ReleaseReaderLock();
             }
 
             PrintLog(LogType.Info, "Uninstalling package " + packagename);
@@ -377,7 +451,15 @@ namespace SilverSim.Updater
                     File.Delete(fPath);
                 }
             }
-            m_InstalledPackages.Remove(pack.Name);
+            m_RwLock.AcquireWriterLock(-1);
+            try
+            {
+                m_InstalledPackages.Remove(pack.Name);
+            }
+            finally
+            {
+                m_RwLock.ReleaseWriterLock();
+            }
             PrintLog(LogType.Info, "Uninstalled package " + packagename);
         }
 
@@ -456,7 +538,18 @@ namespace SilverSim.Updater
 
         public void VerifyInstallation()
         {
-            foreach (PackageDescription pack in new List<PackageDescription>(m_InstalledPackages.Values))
+            List<PackageDescription> installedpackages;
+
+            m_RwLock.AcquireReaderLock(-1);
+            try
+            {
+                installedpackages = new List<PackageDescription>(m_InstalledPackages.Values);
+            }
+            finally
+            {
+                m_RwLock.ReleaseReaderLock();
+            }
+            foreach (PackageDescription pack in installedpackages)
             {
                 PrintLog(LogType.Info, "Verifying package " + pack.Name + " (" + pack.Version + ")");
                 if (!VerifyInstalledPackage(pack))
@@ -469,15 +562,23 @@ namespace SilverSim.Updater
             }
 
             Dictionary<string, string> unresolvedDependencies = new Dictionary<string, string>();
-            foreach(PackageDescription pack in m_InstalledPackages.Values)
+            m_RwLock.AcquireReaderLock(-1);
+            try
             {
-                foreach(KeyValuePair<string, string> kvp in pack.Dependencies)
+                foreach (PackageDescription pack in m_InstalledPackages.Values)
                 {
-                    if (!m_InstalledPackages.ContainsKey(kvp.Key) && !unresolvedDependencies.ContainsKey(kvp.Key))
+                    foreach (KeyValuePair<string, string> kvp in pack.Dependencies)
                     {
-                        unresolvedDependencies.Add(kvp.Key, kvp.Value);
+                        if (!m_InstalledPackages.ContainsKey(kvp.Key) && !unresolvedDependencies.ContainsKey(kvp.Key))
+                        {
+                            unresolvedDependencies.Add(kvp.Key, kvp.Value);
+                        }
                     }
                 }
+            }
+            finally
+            {
+                m_RwLock.ReleaseReaderLock();
             }
 
             while(unresolvedDependencies.Count != 0)
@@ -485,20 +586,36 @@ namespace SilverSim.Updater
                 KeyValuePair<string, string> unresolvedPackage = unresolvedDependencies.First<KeyValuePair<string, string>>();
                 unresolvedDependencies.Remove(unresolvedPackage.Key);
 
-                if(m_InstalledPackages.ContainsKey(unresolvedPackage.Key))
+                m_RwLock.AcquireReaderLock(-1);
+                try
                 {
-                    /* do not re-install if already installed */
-                    continue;
+                    if (m_InstalledPackages.ContainsKey(unresolvedPackage.Key))
+                    {
+                        /* do not re-install if already installed */
+                        continue;
+                    }
+                }
+                finally
+                {
+                    m_RwLock.ReleaseReaderLock();
                 }
 
                 PackageDescription pack = InstallPackageNoDependencies(unresolvedPackage.Key, unresolvedPackage.Value);
 
-                foreach (KeyValuePair<string, string> kvp in pack.Dependencies)
+                m_RwLock.AcquireReaderLock(-1);
+                try
                 {
-                    if (!m_InstalledPackages.ContainsKey(kvp.Key) && !unresolvedDependencies.ContainsKey(kvp.Key))
+                    foreach (KeyValuePair<string, string> kvp in pack.Dependencies)
                     {
-                        unresolvedDependencies.Add(kvp.Key, kvp.Value);
+                        if (!m_InstalledPackages.ContainsKey(kvp.Key) && !unresolvedDependencies.ContainsKey(kvp.Key))
+                        {
+                            unresolvedDependencies.Add(kvp.Key, kvp.Value);
+                        }
                     }
+                }
+                finally
+                {
+                    m_RwLock.ReleaseReaderLock();
                 }
             }
         }
@@ -579,53 +696,61 @@ namespace SilverSim.Updater
                 throw;
             }
 
-            package.WriteFile(Path.Combine(InstalledPackagesPath, package.Name + ".spkg"));
-
-            using (FileStream fs = new FileStream(cachefile, FileMode.Open))
+            m_RwLock.AcquireWriterLock(-1);
+            try
             {
-                using (ZipArchive zip = new ZipArchive(fs))
+                package.WriteFile(Path.Combine(InstalledPackagesPath, package.Name + ".spkg"));
+
+                using (FileStream fs = new FileStream(cachefile, FileMode.Open))
                 {
-                    foreach (ZipArchiveEntry entry in zip.Entries)
+                    using (ZipArchive zip = new ZipArchive(fs))
                     {
-                        using (Stream i = entry.Open())
+                        foreach (ZipArchiveEntry entry in zip.Entries)
                         {
-                            string targetFile = Path.Combine(InstallRootPath, entry.FullName);
-                            if (DoesFileRequireReplacement(entry.FullName))
+                            using (Stream i = entry.Open())
                             {
-                                if (!File.Exists(targetFile + ".delete") && File.Exists(targetFile))
+                                string targetFile = Path.Combine(InstallRootPath, entry.FullName);
+                                if (DoesFileRequireReplacement(entry.FullName))
                                 {
-                                    try
+                                    if (!File.Exists(targetFile + ".delete") && File.Exists(targetFile))
                                     {
-                                        File.Delete(targetFile);
+                                        try
+                                        {
+                                            File.Delete(targetFile);
+                                        }
+                                        catch
+                                        {
+                                            File.Move(targetFile, targetFile + ".delete");
+                                        }
                                     }
-                                    catch
+                                    if (File.Exists(targetFile + ".delete"))
                                     {
-                                        File.Move(targetFile, targetFile + ".delete");
+                                        IsRestartRequired = true;
                                     }
                                 }
-                                if (File.Exists(targetFile + ".delete"))
+                                if (File.Exists(targetFile))
                                 {
-                                    IsRestartRequired = true;
+                                    File.Delete(targetFile);
                                 }
-                            }
-                            if(File.Exists(targetFile))
-                            {
-                                File.Delete(targetFile);
-                            }
-                            string targetDir = Path.GetFullPath(Path.Combine(targetFile, ".."));
-                            if (!Directory.Exists(targetDir))
-                            {
-                                Directory.CreateDirectory(targetDir);
-                            }
-                            using (FileStream o = new FileStream(targetFile, FileMode.Create))
-                            {
-                                i.CopyTo(o);
+                                string targetDir = Path.GetFullPath(Path.Combine(targetFile, ".."));
+                                if (!Directory.Exists(targetDir))
+                                {
+                                    Directory.CreateDirectory(targetDir);
+                                }
+                                using (FileStream o = new FileStream(targetFile, FileMode.Create))
+                                {
+                                    i.CopyTo(o);
+                                }
                             }
                         }
                     }
                 }
+                m_InstalledPackages[package.Name] = new PackageDescription(package);
             }
-            m_InstalledPackages[package.Name] = new PackageDescription(package);
+            finally
+            {
+                m_RwLock.ReleaseWriterLock();
+            }
         }
 
         void DownloadPackage(PackageDescription package)
