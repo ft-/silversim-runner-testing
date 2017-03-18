@@ -42,7 +42,7 @@ namespace SilverSim.Main
         {
             Thread.CurrentThread.Name = "SilverSim:Main";
             CoreUpdater.Instance.OnUpdateLog += ConsoleUpdaterLog;
-            if (!args.Contains("--no-autoupdate"))
+            if (!args.Contains("--no-installed-verify") || args.Contains("--update-only"))
             {
                 CoreUpdater.Instance.CheckForUpdates();
                 CoreUpdater.Instance.VerifyInstallation();
