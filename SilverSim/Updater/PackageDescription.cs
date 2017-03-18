@@ -41,6 +41,7 @@ namespace SilverSim.Updater
     public class PackageDescription
     {
         public string Version { get; protected set; }
+        public string Description { get; protected set; }
         public string InterfaceVersion { get; protected set; }
         public string License { get; protected set; }
         public string Name { get; protected set; }
@@ -87,6 +88,7 @@ namespace SilverSim.Updater
             Version = desc.Version;
             InterfaceVersion = desc.InterfaceVersion;
             License = desc.License;
+            Description = desc.Description;
             Name = desc.Name;
             Hash = desc.Hash;
             foreach (KeyValuePair<string, string> kvp in desc.Dependencies)
@@ -108,6 +110,7 @@ namespace SilverSim.Updater
             License = string.Empty;
             InterfaceVersion = string.Empty;
             Version = string.Empty;
+            Description = string.Empty;
             using (XmlTextReader reader = new XmlTextReader(input))
             {
                 LoadPackageData(reader);
@@ -273,6 +276,13 @@ namespace SilverSim.Updater
                                     throw new InvalidPackageDescriptionException();
                                 }
                                 Name = ReadElementValueAsString(reader);
+                                break;
+
+                            case "description":
+                                if(!reader.IsEmptyElement)
+                                {
+                                    Description = ReadElementValueAsString(reader);
+                                }
                                 break;
 
                             case "dependencies":
@@ -489,6 +499,13 @@ namespace SilverSim.Updater
                         w.WriteStartElement("name");
                         w.WriteValue(Name);
                         w.WriteEndElement();
+
+                        if(!string.IsNullOrEmpty(Description))
+                        {
+                            w.WriteStartElement("description");
+                            w.WriteValue(Description);
+                            w.WriteEndElement();
+                        }
 
                         w.WriteStartElement("version");
                         w.WriteValue(Version);
