@@ -377,6 +377,7 @@ namespace SilverSim.Updater
                     File.Delete(fPath);
                 }
             }
+            m_InstalledPackages.Remove(pack.Name);
             PrintLog(LogType.Info, "Uninstalled package " + packagename);
         }
 
@@ -386,10 +387,10 @@ namespace SilverSim.Updater
             current = string.IsNullOrEmpty(version) ?
                 new PackageDescription(FeedUrl + InterfaceVersion + "/" + packagename + ".spkg") :
                 new PackageDescription(FeedUrl + InterfaceVersion + "/" + version + "/" + packagename + ".spkg");
-            PrintLog(LogType.Info, "Installing package " + packagename + " (" + current.Version + ")");
+            PrintLog(LogType.Info, "Installing package " + packagename + " (" + current.Version + ") without dependency check");
             DownloadPackage(current);
             UnpackPackage(current);
-            PrintLog(LogType.Info, "Installed package " + packagename + " (" + current.Version + ")");
+            PrintLog(LogType.Info, "Installed package " + packagename + " (" + current.Version + ") without dependency check");
             return current;
         }
 
@@ -482,6 +483,12 @@ namespace SilverSim.Updater
             {
                 KeyValuePair<string, string> unresolvedPackage = unresolvedDependencies.First<KeyValuePair<string, string>>();
                 unresolvedDependencies.Remove(unresolvedPackage.Key);
+
+                if(m_InstalledPackages.ContainsKey(unresolvedPackage.Key))
+                {
+                    /* do not re-install if already installed */
+                    continue;
+                }
 
                 PackageDescription pack = InstallPackageNoDependencies(unresolvedPackage.Key, unresolvedPackage.Value);
 
@@ -617,6 +624,7 @@ namespace SilverSim.Updater
                     }
                 }
             }
+            m_InstalledPackages[package.Name] = new PackageDescription(package);
         }
 
         void DownloadPackage(PackageDescription package)
