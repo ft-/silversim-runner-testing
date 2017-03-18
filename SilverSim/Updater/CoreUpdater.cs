@@ -60,6 +60,7 @@ namespace SilverSim.Updater
         public bool IsRestartRequired { get; private set; }
         Dictionary<string, PackageDescription> m_InstalledPackages = new Dictionary<string, PackageDescription>();
         Dictionary<string, PackageDescription> m_AvailablePackages = new Dictionary<string, PackageDescription>();
+        Dictionary<string, bool> m_HiddenPackages = new Dictionary<string, bool>();
         public IReadOnlyDictionary<string, string> InstalledPackages
         {
             get
@@ -68,6 +69,23 @@ namespace SilverSim.Updater
                 foreach(PackageDescription pack in m_InstalledPackages.Values)
                 {
                     pkgs.Add(pack.Name, pack.Version);
+                }
+                return pkgs;
+            }
+        }
+
+        public IReadOnlyDictionary<string, PackageDescription> AvailablePackages
+        {
+            get
+            {
+                Dictionary<string, PackageDescription> pkgs = new Dictionary<string, PackageDescription>();
+                foreach(PackageDescription pack in m_AvailablePackages.Values)
+                {
+                    bool ishidden;
+                    if(!m_HiddenPackages.TryGetValue(pack.Name, out ishidden) || !ishidden)
+                    {
+                        pkgs.Add(pack.Name, new PackageDescription(pack));
+                    }
                 }
                 return pkgs;
             }
@@ -219,10 +237,63 @@ namespace SilverSim.Updater
                 return;
             }
 
+            List<string> additionalpackagestofetch = new List<string>();
+            using (XmlTextReader reader = new XmlTextReader(FeedUrl + InterfaceVersion + "/packages.list"))
+            {
+                while(reader.Read())
+                {
+                    switch(reader.NodeType)
+                    {
+                        case XmlNodeType.Element:
+                            string packagename = string.Empty;
+                            bool isHidden = false;
+                            if (reader.MoveToFirstAttribute())
+                            {
+                                do
+                                {
+                                    switch (reader.Name)
+                                    {
+                                        case "name":
+                                            packagename = reader.Value;
+                                            break;
+
+                                        case "hidden":
+                                            isHidden = bool.Parse(reader.Value);
+                                            break;
+
+                                        default:
+                                            break;
+                                    }
+                                }
+                                while (reader.MoveToNextAttribute());
+
+                                if (!string.IsNullOrEmpty(packagename))
+                                {
+                                    m_HiddenPackages[packagename] = isHidden;
+                                    if (!m_AvailablePackages.ContainsKey(packagename))
+                                    {
+                                        additionalpackagestofetch.Add(packagename);
+                                    }
+                                }
+                            }
+                            break;
+
+                        default:
+                            break;
+                    }
+                }
+            }
+
             List<PackageDescription> updatesAvail = new List<PackageDescription>();
             foreach(KeyValuePair<string, PackageDescription> kvp in m_InstalledPackages)
             {
                 PackageDescription current = new PackageDescription(FeedUrl + InterfaceVersion + "/" + kvp.Key + ".spkg");
+                m_AvailablePackages[current.Name] = current;
+            }
+
+            foreach(string package in additionalpackagestofetch)
+            {
+                PackageDescription current = new PackageDescription(FeedUrl + InterfaceVersion + "/" + package + ".spkg");
                 m_AvailablePackages[current.Name] = current;
             }
         }
