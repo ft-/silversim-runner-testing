@@ -42,6 +42,7 @@ namespace SilverSim.Updater
     {
         public string Version { get; protected set; }
         public string InterfaceVersion { get; protected set; }
+        public string License { get; protected set; }
         public string Name { get; protected set; }
         public byte[] Hash { get; protected set; }
         protected readonly Dictionary<string, string> m_Dependencies = new Dictionary<string, string>();
@@ -65,11 +66,16 @@ namespace SilverSim.Updater
 
         protected PackageDescription()
         {
-
+            License = string.Empty;
+            InterfaceVersion = string.Empty;
+            Version = string.Empty;
         }
 
         public PackageDescription(string url)
         {
+            License = string.Empty;
+            InterfaceVersion = string.Empty;
+            Version = string.Empty;
             using (XmlTextReader reader = new XmlTextReader(url))
             {
                 LoadPackageData(reader);
@@ -78,6 +84,9 @@ namespace SilverSim.Updater
 
         public PackageDescription(Stream input)
         {
+            License = string.Empty;
+            InterfaceVersion = string.Empty;
+            Version = string.Empty;
             using (XmlTextReader reader = new XmlTextReader(input))
             {
                 LoadPackageData(reader);
@@ -227,6 +236,14 @@ namespace SilverSim.Updater
                                     throw new InvalidPackageDescriptionException();
                                 }
                                 InterfaceVersion = ReadElementValueAsString(reader);
+                                break;
+
+                            case "license":
+                                if(reader.IsEmptyElement)
+                                {
+                                    throw new InvalidPackageDescriptionException();
+                                }
+                                License = ReadElementValueAsString(reader);
                                 break;
 
                             case "name":
