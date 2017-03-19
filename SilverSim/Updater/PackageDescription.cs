@@ -70,6 +70,7 @@ namespace SilverSim.Updater
             License = string.Empty;
             InterfaceVersion = string.Empty;
             Version = string.Empty;
+            Description = string.Empty;
         }
 
         public PackageDescription(string url)
@@ -77,6 +78,7 @@ namespace SilverSim.Updater
             License = string.Empty;
             InterfaceVersion = string.Empty;
             Version = string.Empty;
+            Description = string.Empty;
             using (XmlTextReader reader = new XmlTextReader(url))
             {
                 LoadPackageData(reader);
