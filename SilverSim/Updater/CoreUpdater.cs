@@ -106,11 +106,11 @@ namespace SilverSim.Updater
             }
         }
 
-        public IReadOnlyDictionary<string, PackageDescription> AvailablePackages
+        public IReadOnlyDictionary<string, string> AvailablePackages
         {
             get
             {
-                Dictionary<string, PackageDescription> pkgs = new Dictionary<string, PackageDescription>();
+                Dictionary<string, string> pkgs = new Dictionary<string, string>();
                 m_RwLock.AcquireReaderLock(-1);
                 try
                 {
@@ -119,7 +119,7 @@ namespace SilverSim.Updater
                         bool ishidden;
                         if (!m_HiddenPackages.TryGetValue(pack.Name, out ishidden) || !ishidden)
                         {
-                            pkgs.Add(pack.Name, new PackageDescription(pack));
+                            pkgs.Add(pack.Name, pack.Version);
                         }
                     }
                 }
