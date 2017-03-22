@@ -85,6 +85,51 @@ namespace SilverSim.Updater
             }
         }
 
+        public bool TryGetInstalledPackageDetails(string pkgname, out PackageDescription desc)
+        {
+            desc = null;
+            m_RwLock.AcquireReaderLock(-1);
+            try
+            {
+                PackageDescription found;
+                if (m_InstalledPackages.TryGetValue(pkgname, out found))
+                {
+                    desc = new PackageDescription(found);
+                    return true;
+                }
+            }
+            finally
+            {
+                m_RwLock.ReleaseReaderLock();
+            }
+            return false;
+        }
+
+        public bool TryGetAvailablePackageDetails(string pkgname, out PackageDescription desc)
+        {
+            desc = null;
+            m_RwLock.AcquireReaderLock(-1);
+            try
+            {
+                PackageDescription found;
+                if (m_AvailablePackages.TryGetValue(pkgname, out found))
+                {
+                    desc = new PackageDescription(found);
+                    return true;
+                }
+            }
+            finally
+            {
+                m_RwLock.ReleaseReaderLock();
+            }
+            return false;
+        }
+
+        public bool TryGetPackageDetails(string pkgname, out PackageDescription desc)
+        {
+            return TryGetInstalledPackageDetails(pkgname, out desc) || TryGetAvailablePackageDetails(pkgname, out desc);
+        }
+
         public IReadOnlyDictionary<string, string> InstalledPackages
         {
             get
