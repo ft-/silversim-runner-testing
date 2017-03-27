@@ -49,7 +49,8 @@ namespace SilverSim.Main.GUI
         {
             m_Args = args;
             m_TrayMenu = new ContextMenu();
-            m_TrayMenu.MenuItems.Add("Shutdown application", OnExit);
+            m_TrayMenu.MenuItems.Add("Show Last Message", OnShowLastBallon);
+            m_TrayMenu.MenuItems.Add("Shutdown Instance", OnExit);
 
             m_TrayIcon = new NotifyIcon();
             m_TrayIcon.Text = "SilverSim";
@@ -138,6 +139,14 @@ namespace SilverSim.Main.GUI
                 Type t = m_Startup.GetType();
                 MethodInfo mi = t.GetMethod("Shutdown");
                 mi.Invoke(m_Startup, new object[0]);
+            }
+        }
+
+        void OnShowLastBallon(object sender, EventArgs e)
+        {
+            if (!string.IsNullOrEmpty(m_TrayIcon.BalloonTipText))
+            {
+                m_TrayIcon.ShowBalloonTip(30000);
             }
         }
 

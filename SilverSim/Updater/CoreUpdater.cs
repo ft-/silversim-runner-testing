@@ -398,7 +398,6 @@ namespace SilverSim.Updater
                 }
             }
 
-            List<PackageDescription> updatesAvail = new List<PackageDescription>();
             foreach(KeyValuePair<string, PackageDescription> kvp in m_InstalledPackages)
             {
                 PackageDescription current = new PackageDescription(FeedUrl + InterfaceVersion + "/" + kvp.Key + ".spkg");
