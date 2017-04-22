@@ -56,6 +56,8 @@ namespace SilverSim.Updater
         public string FeedUrl { get; private set; }
         public string PackageCachePath { get; private set; }
         public string InstalledPackagesPath { get; private set; }
+        public string BinariesPath { get; private set; }
+        public string PluginsPath { get; private set; }
         public string InterfaceVersion { get; private set; }
         public string InstallRootPath { get; private set; }
         public bool IsRestartRequired { get; private set; }
@@ -241,6 +243,8 @@ namespace SilverSim.Updater
             PackageCachePath = Path.Combine(InstallRootPath, "data/dl-cache");
             Directory.CreateDirectory(PackageCachePath);
             InstalledPackagesPath = Path.Combine(InstallRootPath, "bin/installed-packages");
+            BinariesPath = Path.Combine(InstallRootPath, "bin");
+            PluginsPath = Path.Combine(InstallRootPath, "bin/plugins");
             Directory.CreateDirectory(InstalledPackagesPath);
             InterfaceVersion = string.Empty;
             if (LoadUpdaterConfig())
