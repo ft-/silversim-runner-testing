@@ -178,6 +178,32 @@ namespace SilverSim.Updater
             }
         }
 
+        public IReadOnlyList<string> GetPreloadAssemblies(string mode)
+        {
+            List<string> preloadAssemblies = new List<string>();
+            m_RwLock.AcquireReaderLock(-1);
+            try
+            {
+                foreach (PackageDescription pack in m_InstalledPackages.Values)
+                {
+                    foreach (PackageDescription.PreloadAssembly preloadAssembly in pack.PreloadAssemblies)
+                    {
+                        string defConfig = preloadAssembly.Filename;
+                        if (!string.IsNullOrEmpty(defConfig) && (preloadAssembly.StartTypes.Count == 0 || preloadAssembly.StartTypes.Contains(mode)) &&
+                            !preloadAssemblies.Contains(preloadAssembly.Filename))
+                        {
+                            preloadAssemblies.Add(preloadAssembly.Filename);
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                m_RwLock.ReleaseReaderLock();
+            }
+            return preloadAssemblies;
+        }
+
         public IReadOnlyList<string> GetDefaultConfigurationFiles(string mode)
         {
             List<string> configs = new List<string>();
