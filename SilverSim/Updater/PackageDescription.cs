@@ -49,8 +49,10 @@ namespace SilverSim.Updater
         protected readonly Dictionary<string, string> m_Dependencies = new Dictionary<string, string>();
         protected readonly Dictionary<string, FileInfo> m_Files = new Dictionary<string, FileInfo>();
         protected readonly List<Configuration> m_DefaultConfigurations = new List<Configuration>();
+        protected readonly List<PreloadAssembly> m_PreloadAssembles = new List<PreloadAssembly>();
         public IReadOnlyDictionary<string, string> Dependencies { get { return m_Dependencies; } }
         public IReadOnlyDictionary<string, FileInfo> Files { get { return m_Files; } }
+        public IReadOnlyCollection<PreloadAssembly> PreloadAssemblies { get { return m_PreloadAssembles; } }
         public IReadOnlyList<Configuration> DefaultConfigurations { get { return m_DefaultConfigurations; } }
 
         public struct FileInfo
@@ -62,6 +64,12 @@ namespace SilverSim.Updater
         public struct Configuration
         {
             public string Source;
+            public IReadOnlyList<string> StartTypes;
+        }
+
+        public struct PreloadAssembly
+        {
+            public string Filename;
             public IReadOnlyList<string> StartTypes;
         }
 
@@ -104,6 +112,10 @@ namespace SilverSim.Updater
             foreach (Configuration cfg in desc.DefaultConfigurations)
             {
                 m_DefaultConfigurations.Add(cfg);
+            }
+            foreach(PreloadAssembly info in desc.PreloadAssemblies)
+            {
+                m_PreloadAssembles.Add(info);
             }
         }
 
@@ -256,6 +268,14 @@ namespace SilverSim.Updater
                                 m_DefaultConfigurations.Add(LoadPackageDataDefaultCfg(reader));
                                 break;
 
+                            case "preload-assembly":
+                                if(reader.IsEmptyElement)
+                                {
+                                    throw new InvalidPackageDescriptionException();
+                                }
+                                m_PreloadAssembles.Add(LoadPackageDataPreloadAssembly(reader));
+                                break;
+
                             case "interface-version":
                                 if(reader.IsEmptyElement)
                                 {
@@ -355,6 +375,51 @@ namespace SilverSim.Updater
 
                     case XmlNodeType.EndElement:
                         if (reader.Name == "default-configuration")
+                        {
+                            cfg.StartTypes = startTypes;
+                            return cfg;
+                        }
+                        throw new InvalidPackageDescriptionException();
+                }
+            }
+            throw new InvalidPackageDescriptionException();
+        }
+
+        PreloadAssembly LoadPackageDataPreloadAssembly(XmlTextReader reader)
+        {
+            PreloadAssembly cfg = new PreloadAssembly();
+            List<string> startTypes = new List<string>();
+            while (reader.Read())
+            {
+                switch (reader.NodeType)
+                {
+                    case XmlNodeType.Element:
+                        switch (reader.Name)
+                        {
+                            case "assembly":
+                                if (reader.IsEmptyElement)
+                                {
+                                    throw new InvalidPackageDescriptionException();
+                                }
+                                cfg.Filename = ReadElementValueAsString(reader);
+                                break;
+
+                            case "use-if-started-as":
+                                if (reader.IsEmptyElement)
+                                {
+                                    throw new InvalidPackageDescriptionException();
+                                }
+                                startTypes.Add(ReadElementValueAsString(reader));
+                                break;
+
+                            default:
+                                ReadToEndElement(reader);
+                                break;
+                        }
+                        break;
+
+                    case XmlNodeType.EndElement:
+                        if (reader.Name == "preload-assembly")
                         {
                             cfg.StartTypes = startTypes;
                             return cfg;
@@ -538,6 +603,21 @@ namespace SilverSim.Updater
                             w.WriteValue(cfg.Source);
                             w.WriteEndElement();
                             foreach(string start in cfg.StartTypes)
+                            {
+                                w.WriteStartElement("use-if-started-as");
+                                w.WriteValue(start);
+                                w.WriteEndElement();
+                            }
+                            w.WriteEndElement();
+                        }
+
+                        foreach(PreloadAssembly preload in m_PreloadAssembles)
+                        {
+                            w.WriteStartElement("preload-assembly");
+                            w.WriteStartElement("assembly");
+                            w.WriteValue(preload.Filename);
+                            w.WriteEndElement();
+                            foreach(string start in preload.StartTypes)
                             {
                                 w.WriteStartElement("use-if-started-as");
                                 w.WriteValue(start);
