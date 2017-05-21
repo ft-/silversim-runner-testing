@@ -29,10 +29,10 @@ using System.Threading;
 
 namespace SilverSim.Main.Service
 {
-    sealed class MainService : ServiceBase
+    internal sealed class MainService : ServiceBase
     {
         public const string SERVICE_NAME = "SilverSim";
-        Action m_ShutdownDelegate;
+        private Action m_ShutdownDelegate;
 
         public MainService()
         {
@@ -54,7 +54,7 @@ namespace SilverSim.Main.Service
         }
 
         [SuppressMessage("Gendarme.Rules.Correctness", "EnsureLocalDisposalRule")]
-        static void Main()
+        private static void Main()
         {
             Run(new MainService());
         }
@@ -67,12 +67,8 @@ namespace SilverSim.Main.Service
 
         protected override void OnStop()
         {
-            Action shutdownDelegate = m_ShutdownDelegate;
-            if(shutdownDelegate != null)
-            {
-                shutdownDelegate();
-            }
-            while(!m_ShutdownCompleteEvent.WaitOne(1000))
+            m_ShutdownDelegate?.Invoke();
+            while (!m_ShutdownCompleteEvent.WaitOne(1000))
             {
                 RequestAdditionalTime(1000);
             }
@@ -81,11 +77,7 @@ namespace SilverSim.Main.Service
 
         protected override void OnShutdown()
         {
-            Action shutdownDelegate = m_ShutdownDelegate;
-            if (shutdownDelegate != null)
-            {
-                shutdownDelegate();
-            }
+            m_ShutdownDelegate?.Invoke();
             while (!m_ShutdownCompleteEvent.WaitOne(1000))
             {
                 RequestAdditionalTime(1000);
@@ -93,12 +85,12 @@ namespace SilverSim.Main.Service
             base.OnShutdown();
         }
 
-        readonly ManualResetEvent m_ShutdownCompleteEvent = new ManualResetEvent(false);
+        private readonly ManualResetEvent m_ShutdownCompleteEvent = new ManualResetEvent(false);
 
         [SuppressMessage("Gendarme.Rules.Exceptions", "DoNotSwallowErrorsCatchingNonSpecificExceptionsRule")]
-        void ServiceMain(object obj)
+        private void ServiceMain(object obj)
         {
-            string[] args = (string[])obj;
+            var args = (string[])obj;
             EventLog eventLog = EventLog;
 
             m_ShutdownCompleteEvent.Reset();

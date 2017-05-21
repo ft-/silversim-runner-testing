@@ -30,19 +30,21 @@ namespace SilverSim.Main.Service
     {
         public MainServiceInstaller()
         {
-            ServiceProcessInstaller serviceProcessInstaller = new ServiceProcessInstaller();
-            ServiceInstaller serviceInstaller = new ServiceInstaller();
-
             // Service Account Information
-            serviceProcessInstaller.Account = ServiceAccount.LocalSystem;
-            serviceProcessInstaller.Username = null;
-            serviceProcessInstaller.Password = null;
+            var serviceProcessInstaller = new ServiceProcessInstaller()
+            {
+                Account = ServiceAccount.LocalSystem,
+                Username = null,
+                Password = null
+            };
 
             // Service Information
-            serviceInstaller.DisplayName = MainService.SERVICE_NAME;
-            serviceInstaller.StartType = ServiceStartMode.Automatic;
-            serviceInstaller.ServiceName = MainService.SERVICE_NAME;
-
+            var serviceInstaller = new ServiceInstaller()
+            {
+                DisplayName = MainService.SERVICE_NAME,
+                StartType = ServiceStartMode.Automatic,
+                ServiceName = MainService.SERVICE_NAME
+            };
             Installers.Add(serviceProcessInstaller);
             Installers.Add(serviceInstaller);
         }

@@ -36,35 +36,57 @@ namespace SilverSim.Updater
     [Serializable]
     public class InvalidPackageHashException : Exception
     {
-        public InvalidPackageHashException() { }
-        public InvalidPackageHashException(string message) : base(message) { }
-        protected InvalidPackageHashException(SerializationInfo info, StreamingContext context) : base(info, context) { }
-        public InvalidPackageHashException(string message, Exception innerException) : base(message, innerException) { }
+        public InvalidPackageHashException()
+        {
+        }
+
+        public InvalidPackageHashException(string message) : base(message)
+        {
+        }
+
+        protected InvalidPackageHashException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
+        }
+
+        public InvalidPackageHashException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
     }
 
     [Serializable]
     public class PackageDependencyFoundException : Exception
     {
-        public PackageDependencyFoundException() { }
-        public PackageDependencyFoundException(string message) : base(message) { }
-        protected PackageDependencyFoundException(SerializationInfo info, StreamingContext context) : base(info, context) { }
-        public PackageDependencyFoundException(string message, Exception innerException) : base(message, innerException) { }
+        public PackageDependencyFoundException()
+        {
+        }
+
+        public PackageDependencyFoundException(string message) : base(message)
+        {
+        }
+
+        protected PackageDependencyFoundException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
+        }
+
+        public PackageDependencyFoundException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
     }
 
     public class CoreUpdater
     {
         public string FeedUrl { get; private set; }
-        public string PackageCachePath { get; private set; }
-        public string InstalledPackagesPath { get; private set; }
-        public string BinariesPath { get; private set; }
-        public string PluginsPath { get; private set; }
-        public string InterfaceVersion { get; private set; }
-        public string InstallRootPath { get; private set; }
+        public string PackageCachePath { get; }
+        public string InstalledPackagesPath { get; }
+        public string BinariesPath { get; }
+        public string PluginsPath { get; }
+        public string InterfaceVersion { get; }
+        public string InstallRootPath { get; }
         public bool IsRestartRequired { get; private set; }
-        Dictionary<string, PackageDescription> m_InstalledPackages = new Dictionary<string, PackageDescription>();
-        Dictionary<string, PackageDescription> m_AvailablePackages = new Dictionary<string, PackageDescription>();
-        Dictionary<string, bool> m_HiddenPackages = new Dictionary<string, bool>();
-        readonly ReaderWriterLock m_RwLock = new ReaderWriterLock();
+        private readonly Dictionary<string, PackageDescription> m_InstalledPackages = new Dictionary<string, PackageDescription>();
+        private readonly Dictionary<string, PackageDescription> m_AvailablePackages = new Dictionary<string, PackageDescription>();
+        private readonly Dictionary<string, bool> m_HiddenPackages = new Dictionary<string, bool>();
+        private readonly ReaderWriterLock m_RwLock = new ReaderWriterLock();
 
         public enum LogType
         {
@@ -72,9 +94,10 @@ namespace SilverSim.Updater
             Warn,
             Error
         }
+
         public event Action<LogType, string> OnUpdateLog;
 
-        void PrintLog(LogType evtype, string message)
+        private void PrintLog(LogType evtype, string message)
         {
             /* events are not exactly thread-safe, so make copy first */
             var ev = OnUpdateLog;
@@ -180,7 +203,7 @@ namespace SilverSim.Updater
 
         public IReadOnlyList<string> GetPreloadAssemblies(string mode)
         {
-            List<string> preloadAssemblies = new List<string>();
+            var preloadAssemblies = new List<string>();
             m_RwLock.AcquireReaderLock(-1);
             try
             {
@@ -238,13 +261,13 @@ namespace SilverSim.Updater
                 XmlDocument doc = new XmlDocument();
                 doc.Load("SilverSim.Updater.dll.config");
                 XmlNodeList elemList = doc.GetElementsByTagName("configuration");
-                if (elemList != null && elemList.Count > 0)
+                if (elemList?.Count > 0)
                 {
-                    XmlElement elem = elemList[0] as XmlElement;
+                    var elem = elemList[0] as XmlElement;
                     if (elem != null)
                     {
                         elemList = elem.GetElementsByTagName("feed-url");
-                        if (elemList != null && elemList.Count > 0)
+                        if (elemList?.Count > 0)
                         {
                             elem = elemList[0] as XmlElement;
                             if (elem != null)
@@ -488,10 +511,8 @@ namespace SilverSim.Updater
         }
         #endregion
 
-        bool DoesFileRequireReplacement(string fname)
-        {
-            return fname.EndsWith(".dll") || fname.EndsWith(".exe") || fname.EndsWith(".so") || fname.EndsWith(".dylib");
-        }
+        private bool DoesFileRequireReplacement(string fname) =>
+            fname.EndsWith(".dll") || fname.EndsWith(".exe") || fname.EndsWith(".so") || fname.EndsWith(".dylib");
 
         public void UninstallPackage(string packagename)
         {
@@ -538,10 +559,9 @@ namespace SilverSim.Updater
             PrintLog(LogType.Info, "Uninstalled package " + packagename);
         }
 
-        PackageDescription InstallPackageNoDependencies(string packagename, string version = "")
+        private PackageDescription InstallPackageNoDependencies(string packagename, string version = "")
         {
-            PackageDescription current;
-            current = string.IsNullOrEmpty(version) ?
+            PackageDescription current = string.IsNullOrEmpty(version) ?
                 new PackageDescription(FeedUrl + InterfaceVersion + "/" + packagename + ".spkg") :
                 new PackageDescription(FeedUrl + InterfaceVersion + "/" + version + "/" + packagename + ".spkg");
             PrintLog(LogType.Info, "Installing package " + packagename + " (" + current.Version + ") without dependency check");
@@ -553,23 +573,24 @@ namespace SilverSim.Updater
 
         public void InstallPackage(string packagename)
         {
-            Dictionary<string, PackageDescription> requiredPackages = new Dictionary<string, PackageDescription>();
-            Dictionary<string, string> newDependencies = new Dictionary<string, string>();
-            newDependencies.Add(packagename, string.Empty);
-            while(newDependencies.Count != 0)
+            var requiredPackages = new Dictionary<string, PackageDescription>();
+            var newDependencies = new Dictionary<string, string>
+            {
+                [packagename] = string.Empty
+            };
+            while (newDependencies.Count != 0)
             {
                 string pkg = newDependencies.Keys.First();
                 string version = newDependencies[pkg];
                 newDependencies.Remove(pkg);
-                PackageDescription current;
-                current = string.IsNullOrEmpty(version) ? 
+                PackageDescription current = string.IsNullOrEmpty(version) ?
                     new PackageDescription(FeedUrl + InterfaceVersion + "/" + pkg + ".spkg") :
                     new PackageDescription(FeedUrl + InterfaceVersion + "/" + version +  "/" + pkg + ".spkg");
                 requiredPackages.Add(current.Name, current);
                 foreach (KeyValuePair<string, string> dep in current.Dependencies)
                 {
-                    if (requiredPackages.ContainsKey(dep.Key) || 
-                        (m_InstalledPackages.ContainsKey(dep.Key) && 
+                    if (requiredPackages.ContainsKey(dep.Key) ||
+                        (m_InstalledPackages.ContainsKey(dep.Key) &&
                         (string.IsNullOrEmpty(dep.Value) || dep.Value == m_InstalledPackages[dep.Key].Version)))
                     {
                         continue;
@@ -590,10 +611,8 @@ namespace SilverSim.Updater
             }
         }
 
-        string GetCacheFileName(PackageDescription package)
-        {
-            return Path.Combine(PackageCachePath, package.InterfaceVersion + "-" + package.Version + "-" + package.Name + ".zip");
-        }
+        private string GetCacheFileName(PackageDescription package) =>
+            Path.Combine(PackageCachePath, package.InterfaceVersion + "-" + package.Version + "-" + package.Name + ".zip");
 
         #region Installation verification
         public bool IsInstallationValid
@@ -695,7 +714,7 @@ namespace SilverSim.Updater
             }
         }
 
-        bool IsHashEqual(byte[] a, byte[] b)
+        private bool IsHashEqual(byte[] a, byte[] b)
         {
             if(a.Length == b.Length)
             {
@@ -711,7 +730,7 @@ namespace SilverSim.Updater
             return false;
         }
 
-        bool VerifyInstalledPackage(PackageDescription pack)
+        private bool VerifyInstalledPackage(PackageDescription pack)
         {
             foreach (KeyValuePair<string, PackageDescription.FileInfo> kvp in pack.Files)
             {
@@ -746,7 +765,7 @@ namespace SilverSim.Updater
         }
         #endregion
 
-        void UnpackPackage(PackageDescription package)
+        private void UnpackPackage(PackageDescription package)
         {
             string cachefile = GetCacheFileName(package);
 
@@ -828,7 +847,7 @@ namespace SilverSim.Updater
             }
         }
 
-        void DownloadPackage(PackageDescription package)
+        private void DownloadPackage(PackageDescription package)
         {
             string cachefile = GetCacheFileName(package);
             if (!File.Exists(cachefile))

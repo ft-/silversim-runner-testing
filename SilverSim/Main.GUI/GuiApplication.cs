@@ -40,10 +40,10 @@ namespace SilverSim.Main.GUI
             Application.Run(new GuiApplication(args));
         }
 
-        NotifyIcon m_TrayIcon;
-        ContextMenu m_TrayMenu;
-        object m_Startup;
-        readonly string[] m_Args;
+        private readonly NotifyIcon m_TrayIcon;
+        private readonly ContextMenu m_TrayMenu;
+        private object m_Startup;
+        private readonly string[] m_Args;
 
         public GuiApplication(string[] args)
         {
@@ -52,13 +52,13 @@ namespace SilverSim.Main.GUI
             m_TrayMenu.MenuItems.Add("Show Last Message", OnShowLastBallon);
             m_TrayMenu.MenuItems.Add("Shutdown Instance", OnExit);
 
-            m_TrayIcon = new NotifyIcon();
-            m_TrayIcon.Text = "SilverSim";
-            m_TrayIcon.Icon = new Icon(SystemIcons.Application, 40, 40);
-            m_TrayIcon.ContextMenu = m_TrayMenu;
-            m_TrayIcon.Visible = true;
-
-
+            m_TrayIcon = new NotifyIcon()
+            {
+                Text = "SilverSim",
+                Icon = new Icon(SystemIcons.Application, 40, 40),
+                ContextMenu = m_TrayMenu,
+                Visible = true
+            };
             CoreUpdater.Instance.OnUpdateLog += OnCoreUpdaterLog;
             if (!args.Contains("--no-auto-update"))
             {
@@ -87,7 +87,7 @@ namespace SilverSim.Main.GUI
             new Thread(BackgroundThread).Start();
         }
 
-        void BackgroundThread()
+        private void BackgroundThread()
         {
             /* by not hard referencing the assembly we can actually implement an updater concept here */
             Assembly assembly = Assembly.Load("SilverSim.Main.Common");
@@ -105,7 +105,7 @@ namespace SilverSim.Main.GUI
             SystemEvents.SessionEnded -= OnSessionEnded;
         }
 
-        void OnSessionEnded(object sender, SessionEndedEventArgs e)
+        private void OnSessionEnded(object sender, SessionEndedEventArgs e)
         {
             TriggerShutdown();
             Application.Exit();
@@ -118,23 +118,23 @@ namespace SilverSim.Main.GUI
             base.OnLoad(e);
         }
 
-        void OnConsoleWrite(string msg)
+        private void OnConsoleWrite(string msg)
         {
             m_TrayIcon.BalloonTipTitle = "SilverSim";
             m_TrayIcon.BalloonTipText = msg;
             m_TrayIcon.ShowBalloonTip(10000);
         }
 
-        void OnCoreUpdaterLog(CoreUpdater.LogType type, string message)
+        private void OnCoreUpdaterLog(CoreUpdater.LogType type, string message)
         {
             m_TrayIcon.BalloonTipTitle = "SilverSim";
             m_TrayIcon.BalloonTipText = string.Format("Updater: [{0}] - {1}", type.ToString(), message);
             m_TrayIcon.ShowBalloonTip(10000);
         }
 
-        void TriggerShutdown()
+        private void TriggerShutdown()
         {
-            if (null != m_Startup)
+            if (m_Startup != null)
             {
                 Type t = m_Startup.GetType();
                 MethodInfo mi = t.GetMethod("Shutdown");
@@ -142,7 +142,7 @@ namespace SilverSim.Main.GUI
             }
         }
 
-        void OnShowLastBallon(object sender, EventArgs e)
+        private void OnShowLastBallon(object sender, EventArgs e)
         {
             if (!string.IsNullOrEmpty(m_TrayIcon.BalloonTipText))
             {
@@ -150,7 +150,7 @@ namespace SilverSim.Main.GUI
             }
         }
 
-        void OnExit(object sender, EventArgs e)
+        private void OnExit(object sender, EventArgs e)
         {
             TriggerShutdown();
             Application.Exit();

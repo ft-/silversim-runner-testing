@@ -32,10 +32,21 @@ namespace SilverSim.Updater
     [Serializable]
     public class InvalidPackageDescriptionException : Exception
     {
-        public InvalidPackageDescriptionException() { }
-        public InvalidPackageDescriptionException(string message) : base(message) { }
-        protected InvalidPackageDescriptionException(SerializationInfo info, StreamingContext context) : base(info, context) { }
-        public InvalidPackageDescriptionException(string message, Exception innerException) : base(message, innerException) { }
+        public InvalidPackageDescriptionException()
+        {
+        }
+
+        public InvalidPackageDescriptionException(string message) : base(message)
+        {
+        }
+
+        protected InvalidPackageDescriptionException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
+        }
+
+        public InvalidPackageDescriptionException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
     }
 
     public class PackageDescription
@@ -50,10 +61,10 @@ namespace SilverSim.Updater
         protected readonly Dictionary<string, FileInfo> m_Files = new Dictionary<string, FileInfo>();
         protected readonly List<Configuration> m_DefaultConfigurations = new List<Configuration>();
         protected readonly List<PreloadAssembly> m_PreloadAssembles = new List<PreloadAssembly>();
-        public IReadOnlyDictionary<string, string> Dependencies { get { return m_Dependencies; } }
-        public IReadOnlyDictionary<string, FileInfo> Files { get { return m_Files; } }
-        public IReadOnlyCollection<PreloadAssembly> PreloadAssemblies { get { return m_PreloadAssembles; } }
-        public IReadOnlyList<Configuration> DefaultConfigurations { get { return m_DefaultConfigurations; } }
+        public IReadOnlyDictionary<string, string> Dependencies => m_Dependencies;
+        public IReadOnlyDictionary<string, FileInfo> Files => m_Files;
+        public IReadOnlyCollection<PreloadAssembly> PreloadAssemblies => m_PreloadAssembles;
+        public IReadOnlyList<Configuration> DefaultConfigurations => m_DefaultConfigurations;
 
         public struct FileInfo
         {
@@ -144,7 +155,7 @@ namespace SilverSim.Updater
             return BitConverter.ToString(data).Replace("-", string.Empty);
         }
 
-        void LoadPackageData(XmlTextReader reader)
+        private void LoadPackageData(XmlTextReader reader)
         {
             while(reader.Read())
             {
@@ -167,7 +178,6 @@ namespace SilverSim.Updater
             }
             throw new InvalidPackageDescriptionException();
         }
-
 
         public string ReadElementValueAsString(XmlTextReader reader)
         {
@@ -235,7 +245,7 @@ namespace SilverSim.Updater
             }
         }
 
-        void LoadPackageDataMain(XmlTextReader reader)
+        private void LoadPackageDataMain(XmlTextReader reader)
         {
             while(reader.Read())
             {
@@ -340,10 +350,10 @@ namespace SilverSim.Updater
             throw new InvalidPackageDescriptionException();
         }
 
-        Configuration LoadPackageDataDefaultCfg(XmlTextReader reader)
+        private Configuration LoadPackageDataDefaultCfg(XmlTextReader reader)
         {
-            Configuration cfg = new Configuration();
-            List<string> startTypes = new List<string>();
+            var cfg = new Configuration();
+            var startTypes = new List<string>();
             while (reader.Read())
             {
                 switch (reader.NodeType)
@@ -385,10 +395,10 @@ namespace SilverSim.Updater
             throw new InvalidPackageDescriptionException();
         }
 
-        PreloadAssembly LoadPackageDataPreloadAssembly(XmlTextReader reader)
+        private PreloadAssembly LoadPackageDataPreloadAssembly(XmlTextReader reader)
         {
-            PreloadAssembly cfg = new PreloadAssembly();
-            List<string> startTypes = new List<string>();
+            var cfg = new PreloadAssembly();
+            var startTypes = new List<string>();
             while (reader.Read())
             {
                 switch (reader.NodeType)
@@ -430,7 +440,7 @@ namespace SilverSim.Updater
             throw new InvalidPackageDescriptionException();
         }
 
-        void LoadPackageDataFiles(XmlTextReader reader)
+        private void LoadPackageDataFiles(XmlTextReader reader)
         {
             while (reader.Read())
             {
@@ -493,7 +503,7 @@ namespace SilverSim.Updater
             throw new InvalidPackageDescriptionException();
         }
 
-        void LoadPackageDataDependencies(XmlTextReader reader)
+        private void LoadPackageDataDependencies(XmlTextReader reader)
         {
             while (reader.Read())
             {
@@ -664,6 +674,6 @@ namespace SilverSim.Updater
             }
         }
 
-        static UTF8Encoding m_UTF8NoBOM = new UTF8Encoding(false);
+        private static readonly UTF8Encoding m_UTF8NoBOM = new UTF8Encoding(false);
     }
 }

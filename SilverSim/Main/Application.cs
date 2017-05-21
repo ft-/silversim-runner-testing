@@ -30,15 +30,15 @@ using System.Threading;
 
 namespace SilverSim.Main
 {
-    static class Application
+    internal static class Application
     {
-        static void ConsoleUpdaterLog(CoreUpdater.LogType type, string message)
+        private static void ConsoleUpdaterLog(CoreUpdater.LogType type, string message)
         {
             Console.WriteLine("Updater - [{0}] - {1}", type.ToString(), message);
         }
 
         [SuppressMessage("Gendarme.Rules.Exceptions", "DoNotSwallowErrorsCatchingNonSpecificExceptionsRule")]
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             Thread.CurrentThread.Name = "SilverSim:Main";
             CoreUpdater.Instance.OnUpdateLog += ConsoleUpdaterLog;
@@ -55,8 +55,8 @@ namespace SilverSim.Main
 
             if (CoreUpdater.Instance.IsRestartRequired)
             {
-                ProcessStartInfo startInfo = new ProcessStartInfo(Assembly.GetExecutingAssembly().Location);
-                StringBuilder outarg = new StringBuilder();
+                var startInfo = new ProcessStartInfo(Assembly.GetExecutingAssembly().Location);
+                var outarg = new StringBuilder();
                 foreach(string arg in args)
                 {
                     outarg.AppendFormat("\"{0}\" ", arg);
