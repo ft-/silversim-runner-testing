@@ -22,7 +22,6 @@
 using SilverSim.Updater;
 using System;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -37,7 +36,6 @@ namespace SilverSim.Main
             Console.WriteLine("Updater - [{0}] - {1}", type.ToString(), message);
         }
 
-        [SuppressMessage("Gendarme.Rules.Exceptions", "DoNotSwallowErrorsCatchingNonSpecificExceptionsRule")]
         private static void Main(string[] args)
         {
             Thread.CurrentThread.Name = "SilverSim:Main";

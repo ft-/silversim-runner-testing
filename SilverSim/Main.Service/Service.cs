@@ -22,7 +22,6 @@
 using SilverSim.Updater;
 using System;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.ServiceProcess;
 using System.Threading;
@@ -53,7 +52,6 @@ namespace SilverSim.Main.Service
             }
         }
 
-        [SuppressMessage("Gendarme.Rules.Correctness", "EnsureLocalDisposalRule")]
         private static void Main()
         {
             Run(new MainService());
@@ -87,7 +85,6 @@ namespace SilverSim.Main.Service
 
         private readonly ManualResetEvent m_ShutdownCompleteEvent = new ManualResetEvent(false);
 
-        [SuppressMessage("Gendarme.Rules.Exceptions", "DoNotSwallowErrorsCatchingNonSpecificExceptionsRule")]
         private void ServiceMain(object obj)
         {
             var args = (string[])obj;
