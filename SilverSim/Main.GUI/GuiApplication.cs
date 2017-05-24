@@ -44,12 +44,14 @@ namespace SilverSim.Main.GUI
         private readonly ContextMenu m_TrayMenu;
         private object m_Startup;
         private readonly string[] m_Args;
+        private Type m_LogController;
 
         public GuiApplication(string[] args)
         {
             m_Args = args;
             m_TrayMenu = new ContextMenu();
             m_TrayMenu.MenuItems.Add("Show Last Message", OnShowLastBallon);
+            m_TrayMenu.MenuItems.Add("Show Log", OnShowLog);
             m_TrayMenu.MenuItems.Add("Shutdown Instance", OnExit);
 
             m_TrayIcon = new NotifyIcon()
@@ -73,8 +75,8 @@ namespace SilverSim.Main.GUI
 
             if (CoreUpdater.Instance.IsRestartRequired)
             {
-                ProcessStartInfo startInfo = new ProcessStartInfo(Assembly.GetExecutingAssembly().Location);
-                StringBuilder outarg = new StringBuilder();
+                var startInfo = new ProcessStartInfo(Assembly.GetExecutingAssembly().Location);
+                var outarg = new StringBuilder();
                 foreach (string arg in args)
                 {
                     outarg.AppendFormat("\"{0}\" ", arg);
@@ -91,6 +93,7 @@ namespace SilverSim.Main.GUI
         {
             /* by not hard referencing the assembly we can actually implement an updater concept here */
             Assembly assembly = Assembly.Load("SilverSim.Main.Common");
+            m_LogController = assembly.GetType("SilverSim.Main.Common.Log.LogController");
             Type t = assembly.GetType("SilverSim.Main.Common.Startup");
             m_Startup = Activator.CreateInstance(t);
             PropertyInfo pi = t.GetProperty("IsRunningAsService");
@@ -142,6 +145,14 @@ namespace SilverSim.Main.GUI
             }
         }
 
+        private void OnShowLog(object sender, EventArgs e)
+        {
+            if (m_LogController != null)
+            {
+                new LogView(m_LogController).Show();
+            }
+        }
+
         private void OnShowLastBallon(object sender, EventArgs e)
         {
             if (!string.IsNullOrEmpty(m_TrayIcon.BalloonTipText))
@@ -156,14 +167,14 @@ namespace SilverSim.Main.GUI
             Application.Exit();
         }
 
-        protected override void Dispose(bool isDisposing)
+        protected override void Dispose(bool disposing)
         {
-            if (isDisposing)
+            if (disposing)
             {
                 m_TrayIcon.Dispose();
             }
 
-            base.Dispose(isDisposing);
+            base.Dispose(disposing);
         }
     }
 }
