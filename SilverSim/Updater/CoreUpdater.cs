@@ -212,7 +212,7 @@ namespace SilverSim.Updater
                     foreach (PackageDescription.PreloadAssembly preloadAssembly in pack.PreloadAssemblies)
                     {
                         string defConfig = preloadAssembly.Filename;
-                        if (!string.IsNullOrEmpty(defConfig) && (preloadAssembly.StartTypes.Count == 0 || preloadAssembly.StartTypes.Contains(mode)) &&
+                        if (defConfig?.Length != 0 && (preloadAssembly.StartTypes.Count == 0 || preloadAssembly.StartTypes.Contains(mode)) &&
                             !preloadAssemblies.Contains(preloadAssembly.Filename))
                         {
                             preloadAssemblies.Add(preloadAssembly.Filename);
@@ -238,7 +238,7 @@ namespace SilverSim.Updater
                     foreach (PackageDescription.Configuration cfg in pack.DefaultConfigurations)
                     {
                         string defConfig = cfg.Source;
-                        if (!string.IsNullOrEmpty(defConfig) && (cfg.StartTypes.Count == 0 || cfg.StartTypes.Contains(mode)))
+                        if (defConfig?.Length != 0 && (cfg.StartTypes.Count == 0 || cfg.StartTypes.Contains(mode)))
                         {
                             configs.Add(cfg.Source);
                         }
@@ -296,23 +296,20 @@ namespace SilverSim.Updater
             PluginsPath = Path.Combine(InstallRootPath, "bin/plugins");
             Directory.CreateDirectory(InstalledPackagesPath);
             InterfaceVersion = string.Empty;
-            if (LoadUpdaterConfig())
+            if (LoadUpdaterConfig() && FeedUrl?.Length != 0)
             {
-                if (!string.IsNullOrEmpty(FeedUrl))
+                try
                 {
-                    try
+                    using (Stream i = new FileStream(Path.Combine(InstalledPackagesPath, "SilverSim.Updater.Cfg.spkg"), FileMode.Open))
                     {
-                        using (Stream i = new FileStream(Path.Combine(InstalledPackagesPath, "SilverSim.Updater.Cfg.spkg"), FileMode.Open))
-                        {
-                            PackageDescription desc = new PackageDescription(i);
-                            InterfaceVersion = desc.InterfaceVersion;
-                        }
+                        PackageDescription desc = new PackageDescription(i);
+                        InterfaceVersion = desc.InterfaceVersion;
                     }
-                    catch
-                    {
-                        /* if interface version is not set, we simply switch to disabled */
-                        InterfaceVersion = string.Empty;
-                    }
+                }
+                catch
+                {
+                    /* if interface version is not set, we simply switch to disabled */
+                    InterfaceVersion = string.Empty;
                 }
             }
 
@@ -325,7 +322,7 @@ namespace SilverSim.Updater
 
         public void CheckForUpdates()
         {
-            if(string.IsNullOrEmpty(InterfaceVersion))
+            if(InterfaceVersion?.Length == 0)
             {
                 PrintLog(LogType.Error, "Update system is disabled");
                 return;
@@ -396,7 +393,7 @@ namespace SilverSim.Updater
         #region Package feed handling
         public bool UpdatePackageFeed()
         {
-            if(string.IsNullOrEmpty(InterfaceVersion))
+            if(InterfaceVersion?.Length == 0)
             {
                 /* debugging does not have any package data normally, so we skip loading the feed */
                 PrintLog(LogType.Error, "Update system is disabled");
@@ -434,7 +431,7 @@ namespace SilverSim.Updater
                                 }
                                 while (reader.MoveToNextAttribute());
 
-                                if (!string.IsNullOrEmpty(packagename))
+                                if (packagename?.Length != 0)
                                 {
                                     m_HiddenPackages[packagename] = isHidden;
                                     if (!m_AvailablePackages.ContainsKey(packagename))
@@ -561,7 +558,7 @@ namespace SilverSim.Updater
 
         private PackageDescription InstallPackageNoDependencies(string packagename, string version = "")
         {
-            PackageDescription current = string.IsNullOrEmpty(version) ?
+            PackageDescription current = version?.Length == 0 ?
                 new PackageDescription(FeedUrl + InterfaceVersion + "/" + packagename + ".spkg") :
                 new PackageDescription(FeedUrl + InterfaceVersion + "/" + version + "/" + packagename + ".spkg");
             PrintLog(LogType.Info, "Installing package " + packagename + " (" + current.Version + ") without dependency check");
@@ -583,7 +580,7 @@ namespace SilverSim.Updater
                 string pkg = newDependencies.Keys.First();
                 string version = newDependencies[pkg];
                 newDependencies.Remove(pkg);
-                PackageDescription current = string.IsNullOrEmpty(version) ?
+                PackageDescription current = version?.Length == 0 ?
                     new PackageDescription(FeedUrl + InterfaceVersion + "/" + pkg + ".spkg") :
                     new PackageDescription(FeedUrl + InterfaceVersion + "/" + version +  "/" + pkg + ".spkg");
                 requiredPackages.Add(current.Name, current);
@@ -591,7 +588,7 @@ namespace SilverSim.Updater
                 {
                     if (requiredPackages.ContainsKey(dep.Key) ||
                         (m_InstalledPackages.ContainsKey(dep.Key) &&
-                        (string.IsNullOrEmpty(dep.Value) || dep.Value == m_InstalledPackages[dep.Key].Version)))
+                        (dep.Value?.Length == 0 || dep.Value == m_InstalledPackages[dep.Key].Version)))
                     {
                         continue;
                     }

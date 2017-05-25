@@ -217,7 +217,7 @@ namespace SilverSim.Updater
 
         public void ReadToEndElement(XmlTextReader reader, string tagname = null)
         {
-            if (string.IsNullOrEmpty(tagname))
+            if (tagname?.Length == 0)
             {
                 tagname = reader.Name;
             }
@@ -577,7 +577,7 @@ namespace SilverSim.Updater
                         w.WriteValue(Name);
                         w.WriteEndElement();
 
-                        if(!string.IsNullOrEmpty(Description))
+                        if(Description?.Length != 0)
                         {
                             w.WriteStartElement("description");
                             w.WriteValue(Description);
@@ -592,7 +592,7 @@ namespace SilverSim.Updater
                         w.WriteValue(InterfaceVersion);
                         w.WriteEndElement();
 
-                        if (!string.IsNullOrEmpty(License))
+                        if (License?.Length != 0)
                         {
                             w.WriteStartElement("license");
                             w.WriteValue(License);
@@ -643,7 +643,7 @@ namespace SilverSim.Updater
                             {
                                 w.WriteStartElement("dependency");
                                 w.WriteAttributeString("name", p.Key);
-                                if(!string.IsNullOrEmpty(p.Value))
+                                if(p.Value?.Length != 0)
                                 {
                                     w.WriteAttributeString("version", p.Value);
                                 }
@@ -659,7 +659,7 @@ namespace SilverSim.Updater
                             {
                                 w.WriteStartElement("file");
                                 w.WriteAttributeString("name", kvp.Key);
-                                if (!string.IsNullOrEmpty(kvp.Value.Version))
+                                if (kvp.Value.Version?.Length != 0)
                                 {
                                     w.WriteAttributeString("version", kvp.Value.Version);
                                 }

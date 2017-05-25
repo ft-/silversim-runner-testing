@@ -155,7 +155,7 @@ namespace SilverSim.Main.GUI
 
         private void OnShowLastBallon(object sender, EventArgs e)
         {
-            if (!string.IsNullOrEmpty(m_TrayIcon.BalloonTipText))
+            if (m_TrayIcon.BalloonTipText?.Length != 0)
             {
                 m_TrayIcon.ShowBalloonTip(30000);
             }
