@@ -217,7 +217,7 @@ namespace SilverSim.Updater
 
         public void ReadToEndElement(XmlTextReader reader, string tagname = null)
         {
-            if (tagname?.Length == 0)
+            if (tagname?.Length != 0)
             {
                 tagname = reader.Name;
             }
