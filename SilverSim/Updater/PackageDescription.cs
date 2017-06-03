@@ -65,6 +65,7 @@ namespace SilverSim.Updater
         public IReadOnlyDictionary<string, FileInfo> Files => m_Files;
         public IReadOnlyCollection<PreloadAssembly> PreloadAssemblies => m_PreloadAssembles;
         public IReadOnlyList<Configuration> DefaultConfigurations => m_DefaultConfigurations;
+        public bool SkipDelivery;
 
         public struct FileInfo
         {
@@ -300,6 +301,14 @@ namespace SilverSim.Updater
                                     throw new InvalidPackageDescriptionException();
                                 }
                                 License = ReadElementValueAsString(reader);
+                                break;
+
+                            case "skip-delivery":
+                                if(reader.IsEmptyElement)
+                                {
+                                    throw new InvalidPackageDescriptionException();
+                                }
+                                SkipDelivery = bool.Parse(ReadElementValueAsString(reader));
                                 break;
 
                             case "name":
@@ -576,6 +585,13 @@ namespace SilverSim.Updater
                         w.WriteStartElement("name");
                         w.WriteValue(Name);
                         w.WriteEndElement();
+
+                        if(SkipDelivery)
+                        {
+                            w.WriteStartElement("skip-delivery");
+                            w.WriteValue(SkipDelivery);
+                            w.WriteEndElement();
+                        }
 
                         if(Description?.Length != 0)
                         {
