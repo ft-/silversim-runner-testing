@@ -113,6 +113,7 @@ namespace SilverSim.Updater
             Description = desc.Description;
             Name = desc.Name;
             Hash = desc.Hash;
+            SkipDelivery = desc.SkipDelivery;
             foreach (KeyValuePair<string, string> kvp in desc.Dependencies)
             {
                 m_Dependencies.Add(kvp.Key, kvp.Value);
