@@ -71,6 +71,7 @@ namespace SilverSim.Updater
         {
             public byte[] Hash;
             public string Version;
+            public bool IsVersionSource;
         }
 
         public struct Configuration
@@ -482,6 +483,10 @@ namespace SilverSim.Updater
                                                 fi.Hash = FromHexStringToByteArray(reader.Value);
                                                 break;
 
+                                            case "is-version-src":
+                                                fi.IsVersionSource = bool.Parse(reader.Value);
+                                                break;
+
                                             default:
                                                 break;
                                         }
@@ -577,9 +582,9 @@ namespace SilverSim.Updater
             {
                 File.Delete(filename);
             }
-            using (Stream s = new FileStream(filename, FileMode.Create))
+            using (var s = new FileStream(filename, FileMode.Create))
             {
-                using (XmlTextWriter w = new XmlTextWriter(s, m_UTF8NoBOM))
+                using (var w = new XmlTextWriter(s, m_UTF8NoBOM))
                 {
                     w.WriteStartElement("package");
                     {
@@ -681,6 +686,10 @@ namespace SilverSim.Updater
                                     w.WriteAttributeString("version", kvp.Value.Version);
                                 }
                                 w.WriteAttributeString("sha256", ToHexString(kvp.Value.Hash));
+                                if(kvp.Value.IsVersionSource)
+                                {
+                                    w.WriteAttributeString("is-version-src", "true");
+                                }
                                 w.WriteEndElement();
                             }
                             w.WriteEndElement();
