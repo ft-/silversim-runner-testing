@@ -100,7 +100,7 @@ namespace SilverSim.Updater
             InterfaceVersion = string.Empty;
             Version = string.Empty;
             Description = string.Empty;
-            using (XmlTextReader reader = new XmlTextReader(url))
+            using (var reader = new XmlTextReader(url))
             {
                 LoadPackageData(reader);
             }
@@ -139,7 +139,7 @@ namespace SilverSim.Updater
             InterfaceVersion = string.Empty;
             Version = string.Empty;
             Description = string.Empty;
-            using (XmlTextReader reader = new XmlTextReader(input))
+            using (var reader = new XmlTextReader(input))
             {
                 LoadPackageData(reader);
             }
@@ -461,7 +461,7 @@ namespace SilverSim.Updater
                         switch (reader.Name)
                         {
                             case "file":
-                                FileInfo fi = new FileInfo();
+                                var fi = new FileInfo();
                                 string fname = string.Empty;
                                 bool isEmptyElement = reader.IsEmptyElement;
 
