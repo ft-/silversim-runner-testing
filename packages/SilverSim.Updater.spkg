@@ -6,6 +6,6 @@
 		<dependency name="SilverSim.Updater.Cfg"/>
 	</dependencies>
 	<files>
-		<file name="bin/SilverSim.Updater.dll"/>
+		<file name="bin/SilverSim.Updater.dll" is-version-src="true"/>
 	</files>
 </package>

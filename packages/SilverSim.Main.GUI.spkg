@@ -6,7 +6,7 @@
 		<dependency name="SilverSim.Meta.Core"/>
 	</dependencies>
 	<files>
-		<file name="bin/SilverSim.Main.GUI.exe"/>
+		<file name="bin/SilverSim.Main.GUI.exe" is-version-src="true"/>
 		<file name="bin/SilverSim.Main.GUI.exe.config"/>
 	</files>
 </package>
