@@ -159,7 +159,7 @@ namespace SilverSim.Updater
         {
             get
             {
-                Dictionary<string, string> pkgs = new Dictionary<string, string>();
+                var pkgs = new Dictionary<string, string>();
                 m_RwLock.AcquireReaderLock(-1);
                 try
                 {
@@ -180,7 +180,7 @@ namespace SilverSim.Updater
         {
             get
             {
-                Dictionary<string, string> pkgs = new Dictionary<string, string>();
+                var pkgs = new Dictionary<string, string>();
                 m_RwLock.AcquireReaderLock(-1);
                 try
                 {
@@ -229,7 +229,7 @@ namespace SilverSim.Updater
 
         public IReadOnlyList<string> GetDefaultConfigurationFiles(string mode)
         {
-            List<string> configs = new List<string>();
+            var configs = new List<string>();
             m_RwLock.AcquireReaderLock(-1);
             try
             {
@@ -258,7 +258,7 @@ namespace SilverSim.Updater
         {
             if (File.Exists("SilverSim.Updater.dll.config"))
             {
-                XmlDocument doc = new XmlDocument();
+                var doc = new XmlDocument();
                 doc.Load("SilverSim.Updater.dll.config");
                 XmlNodeList elemList = doc.GetElementsByTagName("configuration");
                 if (elemList?.Count > 0)
@@ -329,7 +329,7 @@ namespace SilverSim.Updater
             }
             LoadInstalledPackageDescriptions();
             UpdatePackageFeed();
-            List<string> updatable = new List<string>();
+            var updatable = new List<string>();
             m_RwLock.AcquireReaderLock(-1);
             try
             {
@@ -362,7 +362,7 @@ namespace SilverSim.Updater
                 m_InstalledPackages.Clear();
                 foreach (string pkgfile in pkgfiles)
                 {
-                    using (Stream i = new FileStream(pkgfile, FileMode.Open))
+                    using (var i = new FileStream(pkgfile, FileMode.Open))
                     {
                         PackageDescription desc;
                         try
@@ -401,8 +401,8 @@ namespace SilverSim.Updater
             }
 
             PrintLog(LogType.Info, "Updating package feed");
-            List<string> additionalpackagestofetch = new List<string>();
-            using (XmlTextReader reader = new XmlTextReader(FeedUrl + InterfaceVersion + "/packages.list"))
+            var additionalpackagestofetch = new List<string>();
+            using (var reader = new XmlTextReader(FeedUrl + InterfaceVersion + "/packages.list"))
             {
                 while(reader.Read())
                 {
@@ -450,7 +450,7 @@ namespace SilverSim.Updater
 
             foreach(KeyValuePair<string, PackageDescription> kvp in m_InstalledPackages)
             {
-                PackageDescription current = new PackageDescription(FeedUrl + InterfaceVersion + "/" + kvp.Key + ".spkg");
+                var current = new PackageDescription(FeedUrl + InterfaceVersion + "/" + kvp.Key + ".spkg");
                 m_RwLock.AcquireWriterLock(-1);
                 try
                 {
@@ -464,7 +464,7 @@ namespace SilverSim.Updater
 
             foreach(string package in additionalpackagestofetch)
             {
-                PackageDescription current = new PackageDescription(FeedUrl + InterfaceVersion + "/" + package + ".spkg");
+                var current = new PackageDescription(FeedUrl + InterfaceVersion + "/" + package + ".spkg");
                 m_RwLock.AcquireWriterLock(-1);
                 try
                 {
@@ -652,7 +652,7 @@ namespace SilverSim.Updater
                 }
             }
 
-            Dictionary<string, string> unresolvedDependencies = new Dictionary<string, string>();
+            var unresolvedDependencies = new Dictionary<string, string>();
             m_RwLock.AcquireReaderLock(-1);
             try
             {
@@ -770,7 +770,7 @@ namespace SilverSim.Updater
             {
                 using (SHA256 hash = SHA256.Create())
                 {
-                    using (FileStream fs = new FileStream(cachefile, FileMode.Open, FileAccess.Read))
+                    using (var fs = new FileStream(cachefile, FileMode.Open, FileAccess.Read))
                     {
                         hash.ComputeHash(fs);
                     }
@@ -792,9 +792,9 @@ namespace SilverSim.Updater
             {
                 package.WriteFile(Path.Combine(InstalledPackagesPath, package.Name + ".spkg"));
 
-                using (FileStream fs = new FileStream(cachefile, FileMode.Open))
+                using (var fs = new FileStream(cachefile, FileMode.Open))
                 {
-                    using (ZipArchive zip = new ZipArchive(fs))
+                    using (var zip = new ZipArchive(fs))
                     {
                         foreach (ZipArchiveEntry entry in zip.Entries)
                         {
@@ -828,7 +828,7 @@ namespace SilverSim.Updater
                                 {
                                     Directory.CreateDirectory(targetDir);
                                 }
-                                using (FileStream o = new FileStream(targetFile, FileMode.Create))
+                                using (var o = new FileStream(targetFile, FileMode.Create))
                                 {
                                     i.CopyTo(o);
                                 }
@@ -858,7 +858,7 @@ namespace SilverSim.Updater
                         {
                             File.Delete(cachefile);
                         }
-                        using (FileStream fs = new FileStream(cachefile, FileMode.Create))
+                        using (var fs = new FileStream(cachefile, FileMode.Create))
                         {
                             s.CopyTo(fs);
                         }

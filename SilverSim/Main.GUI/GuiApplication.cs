@@ -54,7 +54,7 @@ namespace SilverSim.Main.GUI
             m_TrayMenu.MenuItems.Add("Show Log", OnShowLog);
             m_TrayMenu.MenuItems.Add("Shutdown Instance", OnExit);
 
-            m_TrayIcon = new NotifyIcon()
+            m_TrayIcon = new NotifyIcon
             {
                 Text = "SilverSim",
                 Icon = new Icon(SystemIcons.Application, 40, 40),

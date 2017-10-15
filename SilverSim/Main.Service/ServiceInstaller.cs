@@ -31,7 +31,7 @@ namespace SilverSim.Main.Service
         public MainServiceInstaller()
         {
             // Service Account Information
-            var serviceProcessInstaller = new ServiceProcessInstaller()
+            var serviceProcessInstaller = new ServiceProcessInstaller
             {
                 Account = ServiceAccount.LocalSystem,
                 Username = null,
@@ -39,7 +39,7 @@ namespace SilverSim.Main.Service
             };
 
             // Service Information
-            var serviceInstaller = new ServiceInstaller()
+            var serviceInstaller = new ServiceInstaller
             {
                 DisplayName = MainService.SERVICE_NAME,
                 StartType = ServiceStartMode.Automatic,
