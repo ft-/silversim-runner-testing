@@ -256,10 +256,11 @@ namespace SilverSim.Updater
 
         public bool LoadUpdaterConfig()
         {
-            if (File.Exists("SilverSim.Updater.dll.config"))
+            string cfgfile = Assembly.GetExecutingAssembly().Location + ".config";
+            if (File.Exists(cfgfile))
             {
                 var doc = new XmlDocument();
-                doc.Load("SilverSim.Updater.dll.config");
+                doc.Load(cfgfile);
                 XmlNodeList elemList = doc.GetElementsByTagName("configuration");
                 if (elemList?.Count > 0)
                 {
