@@ -303,7 +303,7 @@ namespace SilverSim.Updater
                 {
                     using (Stream i = new FileStream(Path.Combine(InstalledPackagesPath, "SilverSim.Updater.Cfg.spkg"), FileMode.Open))
                     {
-                        PackageDescription desc = new PackageDescription(i);
+                        var desc = new PackageDescription(i);
                         InterfaceVersion = desc.InterfaceVersion;
                     }
                 }
