@@ -252,7 +252,7 @@ namespace SilverSim.Updater
             return configs;
         }
 
-        static public CoreUpdater Instance = new CoreUpdater();
+        static public readonly CoreUpdater Instance = new CoreUpdater();
 
         public bool LoadUpdaterConfig()
         {
