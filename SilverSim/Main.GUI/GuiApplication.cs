@@ -75,7 +75,6 @@ namespace SilverSim.Main.GUI
 
             if (CoreUpdater.Instance.IsRestartRequired)
             {
-                var startInfo = new ProcessStartInfo(Assembly.GetExecutingAssembly().Location);
                 var outarg = new StringBuilder();
                 foreach (string arg in args)
                 {
