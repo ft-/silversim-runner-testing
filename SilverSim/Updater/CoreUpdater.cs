@@ -97,18 +97,7 @@ namespace SilverSim.Updater
 
         public event Action<LogType, string> OnUpdateLog;
 
-        private void PrintLog(LogType evtype, string message)
-        {
-            /* events are not exactly thread-safe, so make copy first */
-            var ev = OnUpdateLog;
-            if(ev != null)
-            {
-                foreach(Action<LogType, string> del in ev.GetInvocationList())
-                {
-                    del(evtype, message);
-                }
-            }
-        }
+        private void PrintLog(LogType evtype, string message) => OnUpdateLog?.Invoke(evtype, message);
 
         public bool TryGetInstalledPackageDetails(string pkgname, out PackageDescription desc)
         {
