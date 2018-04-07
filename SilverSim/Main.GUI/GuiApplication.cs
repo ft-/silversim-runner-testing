@@ -22,6 +22,7 @@
 using Microsoft.Win32;
 using SilverSim.Updater;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
@@ -45,6 +46,10 @@ namespace SilverSim.Main.GUI
         private object m_Startup;
         private readonly string[] m_Args;
         private Type m_LogController;
+        public Func<List<string>, string> m_ExecuteCommand { get; private set; }
+        public Func<string, object> m_GetData { get; private set; }
+        public Func<string, bool> m_HaveData { get; private set; }
+        private MenuItem m_RegionsMenu;
 
         public GuiApplication(string[] args)
         {
@@ -52,6 +57,7 @@ namespace SilverSim.Main.GUI
             m_TrayMenu = new ContextMenu();
             m_TrayMenu.MenuItems.Add("Show Last Message", OnShowLastBallon);
             m_TrayMenu.MenuItems.Add("Show Log", OnShowLog);
+            m_RegionsMenu = m_TrayMenu.MenuItems.Add("Regions", OnRegions);
             m_TrayMenu.MenuItems.Add("Shutdown Instance", OnExit);
 
             m_TrayIcon = new NotifyIcon
@@ -100,10 +106,16 @@ namespace SilverSim.Main.GUI
             MethodInfo mi = t.GetMethod("Run");
             Action<string> del = OnConsoleWrite;
             SystemEvents.SessionEnded += OnSessionEnded;
+            m_ExecuteCommand = Delegate.CreateDelegate(typeof(Func<List<string>, string>), m_Startup, t.GetMethod("ExecuteCommand", new Type[] { typeof(List<string>) })) as Func<List<string>, string>;
+            m_HaveData = Delegate.CreateDelegate(typeof(Func<string, bool>), m_Startup, t.GetMethod("HaveData", new Type[] { typeof(string) })) as Func<string, bool>;
+            m_GetData = Delegate.CreateDelegate(typeof(Func<string, object>), m_Startup, t.GetMethod("GetData", new Type[] { typeof(string) })) as Func<string, object>;
             if (!(bool)mi.Invoke(m_Startup, new object[] { m_Args, del }))
             {
                 Thread.Sleep(3000);
             }
+            m_GetData = null;
+            m_HaveData = null;
+            m_ExecuteCommand = null;
             SystemEvents.SessionEnded -= OnSessionEnded;
         }
 
@@ -142,6 +154,11 @@ namespace SilverSim.Main.GUI
                 MethodInfo mi = t.GetMethod("Shutdown");
                 mi.Invoke(m_Startup, new object[0]);
             }
+        }
+
+        private void OnRegions(object sender, EventArgs e)
+        {
+            new RegionStartStop(this).Show();
         }
 
         private void OnShowLog(object sender, EventArgs e)
