@@ -248,7 +248,10 @@ namespace SilverSim.Updater
             string cfgfile = Assembly.GetExecutingAssembly().Location + ".config";
             if (File.Exists(cfgfile))
             {
-                var doc = new XmlDocument();
+                var doc = new XmlDocument
+                {
+                    XmlResolver = null
+                };
                 doc.Load(cfgfile);
                 XmlNodeList elemList = doc.GetElementsByTagName("configuration");
                 if (elemList?.Count > 0)
