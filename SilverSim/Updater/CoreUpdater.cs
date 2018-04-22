@@ -392,11 +392,15 @@ namespace SilverSim.Updater
 
             PrintLog(LogType.Info, "Updating package feed");
             var additionalpackagestofetch = new List<string>();
-            using (var reader = new XmlTextReader(FeedUrl + InterfaceVersion + "/packages.list"))
+            using (var reader = new XmlTextReader(FeedUrl + InterfaceVersion + "/packages.list")
             {
-                while(reader.Read())
+                DtdProcessing = DtdProcessing.Ignore,
+                XmlResolver = null
+            })
+            {
+                while (reader.Read())
                 {
-                    switch(reader.NodeType)
+                    switch (reader.NodeType)
                     {
                         case XmlNodeType.Element:
                             string packagename = string.Empty;

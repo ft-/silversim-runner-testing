@@ -100,7 +100,11 @@ namespace SilverSim.Updater
             InterfaceVersion = string.Empty;
             Version = string.Empty;
             Description = string.Empty;
-            using (var reader = new XmlTextReader(url))
+            using (var reader = new XmlTextReader(url)
+            {
+                DtdProcessing = DtdProcessing.Ignore,
+                XmlResolver = null
+            })
             {
                 LoadPackageData(reader);
             }
@@ -139,7 +143,11 @@ namespace SilverSim.Updater
             InterfaceVersion = string.Empty;
             Version = string.Empty;
             Description = string.Empty;
-            using (var reader = new XmlTextReader(input))
+            using (var reader = new XmlTextReader(input)
+            {
+                DtdProcessing = DtdProcessing.Ignore,
+                XmlResolver = null
+            })
             {
                 LoadPackageData(reader);
             }
